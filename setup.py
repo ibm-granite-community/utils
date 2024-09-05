@@ -10,6 +10,7 @@ setup(
         'python-dotenv',
         'langchain_community',
         "langchain_ollama",
+        "replicate",
     ],
     author='The IBM Granite Community Team',
     author_email='trevor.d.grant@gmail.com',
