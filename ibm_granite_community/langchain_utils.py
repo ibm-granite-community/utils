@@ -1,6 +1,6 @@
 
 
-def find_langchain_model(platform, model_id, model_kwargs):
+def find_langchain_model(platform, model_id, **model_kwargs):
     if platform.lower() == "replicate":
         from langchain_community.llms import Replicate
         model = Replicate(
