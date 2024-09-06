@@ -3,7 +3,7 @@ name: CI for Jupyter Notebooks
 on:
   push:
     branches:
-      - pm-41
+      - main
   pull_request:
     branches:
       - main
