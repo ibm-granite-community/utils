@@ -28,10 +28,6 @@ def upgrade_python():
         print("installing colab dependencies")
         os.system("python3 -m pip install ipython traitlets jupyter psutil matplotlib setuptools ipython_genutils ipykernel jupyter_console notebook prompt_toolkit httplib2 astor  > /dev/null")
 
-        print("removing and reinstalling numpy")
-        os.system("pip uninstall numpy -y > /dev/null")
-        os.system("pip install numpy -y > /dev/null")
-
         print("linking google package")
         os.system("ln -s /usr/local/lib/python3.10/dist-packages/google /usr/local/lib/python3.11/dist-packages/google > /dev/null")
 
@@ -59,3 +55,6 @@ def setup_env_for_cldk():
     upgrade_python() # delete this line when colab is updated to 3.11
     print("Installing Java")
     install_java()
+    print("removing and reinstalling numpy")
+    os.system("pip uninstall numpy -y > /dev/null")
+    os.system("pip install numpy -y > /dev/null")
