@@ -43,3 +43,7 @@ def get_api_key():
         raise ValueError("API key could not be loaded from any source.")
 
     return api_key
+
+def set_api_key():
+  if os.environ.get('REPLICATE_API_TOKEN') is None:
+    os.environ['REPLICATE_API_TOKEN'] = get_api_key()
