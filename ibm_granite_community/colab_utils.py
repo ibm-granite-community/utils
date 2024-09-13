@@ -13,9 +13,6 @@ def upgrade_python():
         "not be alarmed, this is expected. Just click 'Reconnect' and continue "
         "running the notebook from this cell (ie run this cell again).\n\n"+ "!"*32 + '\n')
 
-        print("Printing content of /usr/local/lib/python* to see available versions")
-        os.system("ls /usr/local/lib/python*")
-
         print("installing python 3.11")
         os.system("sudo apt-get update -y > /dev/null")
         os.system("sudo apt-get install python3.11 python3.11-dev python3.11-distutils libpython3.11-dev > /dev/null")
@@ -35,9 +32,6 @@ def upgrade_python():
         os.system("pip uninstall numpy -y > /dev/null")
         os.system("pip install numpy -y > /dev/null")
 
-        print('cleaning up')
-        os.system("sudo apt autoremove  > /dev/null")
-
         print("linking google package")
         os.system("ln -s /usr/local/lib/python3.10/dist-packages/google /usr/local/lib/python3.11/dist-packages/google > /dev/null")
 
@@ -47,6 +41,8 @@ def upgrade_python():
         os.system('sed -i "s/from IPython.utils import traitlets as _traitlets/import traitlets as _traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py')
         os.system('sed -i "s/from IPython.utils import traitlets/import traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py')
 
+        print('cleaning up and restarting environment')
+        os.system("sudo apt autoremove  > /dev/null")
         #restart environment
         os.kill(os.getpid(), 9)
     else:
