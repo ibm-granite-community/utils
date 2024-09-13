@@ -57,4 +57,4 @@ def setup_env_for_cldk():
     install_java()
     print("removing and reinstalling numpy")
     os.system("pip uninstall numpy -y > /dev/null")
-    os.system("pip install numpy -y > /dev/null")
+    os.system("pip install numpy > /dev/null")
