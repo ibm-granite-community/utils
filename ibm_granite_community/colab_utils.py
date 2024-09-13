@@ -14,34 +14,34 @@ def upgrade_python():
         "and run this cell again.")
 
         print("Printing content of /usr/local/lib/python* to see available versions")
-        !ls /usr/local/lib/python*
+        os.system("ls /usr/local/lib/python*")
 
-        !sudo apt-get update -y > /dev/null
-        !sudo apt-get install python3.11 python3.11-dev python3.11-distutils libpython3.11-dev > /dev/null
-        !sudo apt-get install python3.11-venv binfmt-support  > /dev/null #recommended in install logs of the command above
+        print("installing python 3.11")
+        os.system("sudo apt-get update -y > /dev/null")
+        os.system("sudo apt-get install python3.11 python3.11-dev python3.11-distutils libpython3.11-dev > /dev/null")
+        os.system("sudo apt-get install python3.11-venv binfmt-support  > /dev/null") #recommended in install logs of the command above
 
-        #change alternatives
-        !sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 > /dev/null
-        !sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2 > /dev/null
+        print("updating alternatives")
+        os.system("sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 > /dev/null")
+        os.system("sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2 > /dev/null")
 
-        # install pip
-        !curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11  > /dev/null
+        print("installing pip")
+        os.system("curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11  > /dev/null")
 
-        #install colab's dependencies
-        !python3 -m pip install ipython traitlets jupyter psutil matplotlib setuptools ipython_genutils ipykernel jupyter_console notebook prompt_toolkit httplib2 astor  > /dev/null
+        print("installing colab dependencies")
+        os.system("python3 -m pip install ipython traitlets jupyter psutil matplotlib setuptools ipython_genutils ipykernel jupyter_console notebook prompt_toolkit httplib2 astor  > /dev/null")
 
-        #minor cleanup
-        !sudo apt autoremove  > /dev/null
+        print('cleaning up')
+        os.system("sudo apt autoremove  > /dev/null")
 
-        #link to the old google package
-        !ln -s /usr/local/lib/python3.10/dist-packages/google /usr/local/lib/python3.11/dist-packages/google > /dev/null
+        print("linking google package")
+        os.system("ln -s /usr/local/lib/python3.10/dist-packages/google /usr/local/lib/python3.11/dist-packages/google > /dev/null")
 
         #this is just to verify if 3.11 folder was indeed created
-        print("Printing content of /usr/local/lib/python3.11/")
-        !ls /usr/local/lib/python3.11/
+        print(f"/usr/local/lib/python3.11/ exists: {os.isdir('/usr/local/lib/python3.11/')}")
 
-        !sed -i "s/from IPython.utils import traitlets as _traitlets/import traitlets as _traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py
-        !sed -i "s/from IPython.utils import traitlets/import traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py
+        os.system('sed -i "s/from IPython.utils import traitlets as _traitlets/import traitlets as _traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py')
+        os.system('sed -i "s/from IPython.utils import traitlets/import traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py')
 
         #restart environment
         os.kill(os.getpid(), 9)
@@ -50,9 +50,9 @@ def upgrade_python():
         print("Your out of the box Python is not 3.10, do you even colab bro?")
 
 def install_java():
-    !apt-get install -y openjdk-8-jdk-headless -qq > /dev/null      #install openjdk
+    os.system("apt-get install -y openjdk-8-jdk-headless -qq > /dev/null")      #install openjdk
     os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-8-openjdk-amd64"     #set environment variable
-    !java -version       #check java version
+
 
 def setup_env_for_cldk():
     print("Upgrading Python to 3.11")
