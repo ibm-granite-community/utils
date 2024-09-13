@@ -8,10 +8,10 @@ def upgrade_python():
         print('You already have 3.11, nothing to install, proceeding.')
     elif '3.10' in sys.version:
         print("Python version is: ", sys.version)
-        print("WARNING: This script will install Python 3.11 and restart the "
+        print("!"*32 + "\n\nWARNING: This script will install Python 3.11 and restart the "
         "environment. You WILL recieve a message saying the kernel 'crashed' do "
         "not be alarmed, this is expected. Just click 'Reconnect' and you should "
-        "and run this cell again.")
+        "and run this cell again.\n\n"+ "!"*32)
 
         print("Printing content of /usr/local/lib/python* to see available versions")
         os.system("ls /usr/local/lib/python*")
@@ -38,7 +38,7 @@ def upgrade_python():
         os.system("ln -s /usr/local/lib/python3.10/dist-packages/google /usr/local/lib/python3.11/dist-packages/google > /dev/null")
 
         #this is just to verify if 3.11 folder was indeed created
-        print(f"/usr/local/lib/python3.11/ exists: {os.isdir('/usr/local/lib/python3.11/')}")
+        print(f"/usr/local/lib/python3.11/ exists: {os.path.exists('/usr/local/lib/python3.11/')}")
 
         os.system('sed -i "s/from IPython.utils import traitlets as _traitlets/import traitlets as _traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py')
         os.system('sed -i "s/from IPython.utils import traitlets/import traitlets/" /usr/local/lib/python3.11/dist-packages/google/colab/*.py')
