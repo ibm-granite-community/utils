@@ -8,10 +8,10 @@ def upgrade_python():
         print('You already have 3.11, nothing to install, proceeding.')
     elif '3.10' in sys.version:
         print("Python version is: ", sys.version)
-        print("!"*32 + "\n\nWARNING: This script will install Python 3.11 and restart the "
+        print("\n"+"!"*32 + "\n\nWARNING: This script will install Python 3.11 and restart the "
         "environment. You WILL recieve a message saying the kernel 'crashed' do "
-        "not be alarmed, this is expected. Just click 'Reconnect' and you should "
-        "and run this cell again.\n\n"+ "!"*32)
+        "not be alarmed, this is expected. Just click 'Reconnect' and continue "
+        "running the notebook from this cell (ie run this cell again).\n\n"+ "!"*32 + '\n')
 
         print("Printing content of /usr/local/lib/python* to see available versions")
         os.system("ls /usr/local/lib/python*")
@@ -30,6 +30,10 @@ def upgrade_python():
 
         print("installing colab dependencies")
         os.system("python3 -m pip install ipython traitlets jupyter psutil matplotlib setuptools ipython_genutils ipykernel jupyter_console notebook prompt_toolkit httplib2 astor  > /dev/null")
+
+        print("removing and reinstalling numpy")
+        os.system("pip uninstall numpy -y > /dev/null")
+        os.system("pip install numpy -y > /dev/null")
 
         print('cleaning up')
         os.system("sudo apt autoremove  > /dev/null")
