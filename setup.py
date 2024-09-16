@@ -8,8 +8,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'python-dotenv',
-        'langchain_community',
-        "langchain_ollama",
+        'langchain_community<0.3.0',
+        "langchain_ollama<0.2.0",
         "replicate",
     ],
     author='The IBM Granite Community Team',
