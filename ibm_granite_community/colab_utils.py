@@ -55,6 +55,7 @@ def setup_env_for_cldk():
     upgrade_python() # delete this line when colab is updated to 3.11
     print("Installing Java")
     install_java()
+    ## putting this in the python upgrade and colab can't reconnect...
     print("removing and reinstalling numpy")
     os.system("pip uninstall numpy -y > /dev/null")
-    os.system("pip install numpy > /dev/null")
+    os.system('pip install numpy=="1.26.4 > /dev/null')
