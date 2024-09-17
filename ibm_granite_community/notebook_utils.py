@@ -9,41 +9,45 @@ def is_colab():
         return False
 
 # Function to get the API key
-def get_api_key():
-    api_key = None
+def get_env_var(var_name):
+    env_var = None
+
+    if os.environ.get(var_name) is not None:
+        return os.environ.get(var_name)
 
     if is_colab():
         # If in Google Colab, try to get the API key from a secret
         from google.colab import userdata
         try:
-            api_key = userdata.get('REPLICATE_API_TOKEN')
-            if api_key:
-                print("API key loaded from Google Colab secret.")
+            env_var = userdata.get(var_name)
+            if env_var:
+                print(f"{var_name} loaded from Google Colab secret.")
         except userdata.SecretNotFoundError:
-            print("REPLICATE_API_TOKEN not found in Google Colab secrets.")
+            print(f"{var_name} not found in Google Colab secrets.")
 
-    if not api_key and os.path.exists('.env'):
+    if not env_var and os.path.exists('.env'):
         # Try to load API key from .env file
         try:
             from dotenv import load_dotenv
             load_dotenv()
         except ModuleNotFoundError:
             print("Module 'dotenv' not found. Please install it using 'pip install python-dotenv'.")
-        api_key = os.getenv('REPLICATE_API_TOKEN')
-        if api_key:
-            print("API key loaded from .env file.")
+        env_var = os.getenv(var_name)
+        if env_var:
+            print(f"{var_name} loaded from .env file.")
         else:
-            print("REPLICATE_API_TOKEN not found in .env file.")
-    if not api_key:
+            print(f"{var_name} not found in .env file.")
+
+    if not env_var:
         # If neither Colab nor .env file, prompt the user for the API key
         from getpass import getpass
-        api_key = getpass("Please enter your API key: ")
+        env_var = getpass(f"Please enter your {var_name}: ")
 
-    if not api_key:
-        raise ValueError("API key could not be loaded from any source.")
+    if not env_var:
+        raise ValueError(f"{var_name} could not be loaded from any source.")
 
-    return api_key
+    return env_var
 
-def set_api_key():
-  if os.environ.get('REPLICATE_API_TOKEN') is None:
-    os.environ['REPLICATE_API_TOKEN'] = get_api_key()
+def set_env_var(var_name):
+    if os.environ.get(var_name) is None:
+        os.environ[var_name] = get_env_var(var_name)
