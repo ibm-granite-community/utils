@@ -26,19 +26,5 @@ def find_langchain_vector_db(provider):
         from langchain_chroma import Chroma
         return Chroma(embedding_function=embeddings_model)
 
-    # Uncomment Pinecone when it can be tested by adding PINECONE_API_KEY to github CI
-    # elif provider == "pinecone":
-    #     from langchain_pinecone import PineconeVectorStore
-    #     from pinecone import Pinecone
-
-    #     vector_db_class = PineconeVectorStore
-    #     pc = Pinecone(api_key=get_env_var("PINECONE_API_KEY"))
-
-    #     # This index must already exist in your Pinecone account. The dimensions (length) of the index vector should match the embedding model's embedding dimension.
-    #     index_name = "rag-recipe-example"
-    #     index = pc.Index(index_name)
-
-    #     return PineconeVectorStore(index=index, embedding=embeddings_model)
-
     else:
         raise ValueError(f"Invalid vector store provider '{provider}'")
