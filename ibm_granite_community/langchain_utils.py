@@ -14,7 +14,7 @@ def find_langchain_model(platform, model_id, **model_kwargs):
     return model
 
 
-def find_langchain_vector_db(provider):
+def find_langchain_vector_db(provider, embeddings_model):
     if provider == "milvus":
         from langchain_milvus import Milvus
         
