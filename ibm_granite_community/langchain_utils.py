@@ -14,17 +14,14 @@ def find_langchain_model(platform, model_id, **model_kwargs):
     return model
 
 
-def find_langchain_vector_db(provider, embeddings_model):
+def find_langchain_vector_db(provider, embeddings_model, **model_kwargs):
     if provider == "milvus":
         from langchain_milvus import Milvus
-        
-        # Create a local Milvus db
-        db_file = "/tmp/milvus_for_rag.db"
-        return Milvus(embedding_function=embeddings_model, connection_args={"uri": db_file}, auto_id=True)
+        return Milvus(embedding_function=embeddings_model, **model_kwargs)
 
     elif provider == "chroma":
         from langchain_chroma import Chroma
-        return Chroma(embedding_function=embeddings_model)
+        return Chroma(embedding_function=embeddings_model, **model_kwargs)
 
     else:
         raise ValueError(f"Invalid vector store provider '{provider}'")
