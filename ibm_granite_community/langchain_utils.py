@@ -12,3 +12,16 @@ def find_langchain_model(platform, model_id, **model_kwargs):
         from langchain_ollama.llms import OllamaLLM
         model = OllamaLLM(model=model_id, **model_kwargs)
     return model
+
+
+def find_langchain_vector_db(provider, embeddings_model, **model_kwargs):
+    if provider == "milvus":
+        from langchain_milvus import Milvus
+        return Milvus(embedding_function=embeddings_model, **model_kwargs)
+
+    elif provider == "chroma":
+        from langchain_chroma import Chroma
+        return Chroma(embedding_function=embeddings_model, **model_kwargs)
+
+    else:
+        raise ValueError(f"Invalid vector store provider '{provider}'")
