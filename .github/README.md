@@ -12,6 +12,12 @@ This repository also provides utilities for making recipes runnable in a variety
 1. [Getting Started with Ollama](/recipes/Getting_Started/Getting_Started_with_Ollama.ipynb)
 1. [Getting Started with WatsonX](/recipes/Getting_Started/Getting_Started_with_WatsonX.ipynb)
 
+### Components
+
+1. [Langchain LLMs](/recipes/Components/Langchain_LLMs.ipynb)
+1. [Langchain Vector Stores](/recipes/Components/Langchain_Vector_Stores.ipynb)
+1. [Langchain Embeddings Models](/recipes/Components/Langchain_Embeddings_Models.ipynb)
+
 ## Contributing
 
 For information about contributing to this repo, code of conduct guidelines, etc., see the community [CONTRIBUTING][CG] and [Code of Conduct][CoC] guides.  All commits require DCO-signoff (discussed [here][CG-legal]) _and_ GPG or SSH signing (discussed [here][CG-signing]).  The GitHub recommended code security settings are enforced on this public repository (which include the signing requirement).
