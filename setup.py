@@ -15,6 +15,7 @@ setup(
         "langchain-milvus",
         "langchain-chroma",
         "langchain_ibm",
+        "langchain_huggingface",
     ],
     author='The IBM Granite Community Team',
     author_email='trevor.d.grant@gmail.com',
