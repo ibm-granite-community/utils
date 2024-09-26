@@ -1,4 +1,4 @@
-# IBM Granite Kitchen (utils)
+# IBM Granite Kitche
 
 The example notebooks in the Granite Kitchen (`utils` repo) cover the initial decisions and setup needed to get started using Granite models. 
 
