@@ -6,9 +6,9 @@ This repository also provides utilities for making recipes runnable in a variety
 
 ## Inference Platforms
 
-1. [Getting Started with Replicate](/recipes/Getting_Started/Getting_Started_with_Replicate.ipynb)
-1. [Getting Started with Ollama](/recipes/Getting_Started/Getting_Started_with_Ollama.ipynb)
-1. [Getting Started with WatsonX](/recipes/Getting_Started/Getting_Started_with_WatsonX.ipynb)
+1. [Replicate](/recipes/Getting_Started/Getting_Started_with_Replicate.ipynb)
+1. [Ollama](/recipes/Getting_Started/Getting_Started_with_Ollama.ipynb)
+1. [WatsonX](/recipes/Getting_Started/Getting_Started_with_WatsonX.ipynb)
 
 ## Components
 
