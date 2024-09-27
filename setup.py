@@ -16,6 +16,7 @@ setup(
         "langchain-chroma",
         "langchain_ibm",
         "langchain_huggingface",
+        "requests==2.32.3", # This is a `google-colab 1.0.0` dependency
     ],
     author='The IBM Granite Community Team',
     author_email='trevor.d.grant@gmail.com',
