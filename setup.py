@@ -7,7 +7,7 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     install_requires=[
-        python-dotenv,
+        "python-dotenv",
     ],
     author='The IBM Granite Community Team',
     author_email='trevor.d.grant@gmail.com',
