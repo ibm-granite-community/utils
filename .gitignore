@@ -4,3 +4,4 @@
 ibm_granite_community.egg-info/
 ibm_granite_community/__pycache__/
 build/
+.DS_Store

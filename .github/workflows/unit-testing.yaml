@@ -34,15 +34,9 @@ jobs:
         run: |
           echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
-      - name: Run Jupyter Notebooks
+      - name: Run Tests
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
-          WATSONX_APIKEY: ${{ secrets.WATSONX_APIKEY }}
-          WATSONX_PROJECT_ID: ${{ secrets.WATSONX_PROJECT_ID }}
-          WATSONX_URL: ${{ secrets.WATSONX_URL }}
         run: |
           echo "PYTHONPATH=$PYTHONPATH"
-          for notebook in $(find . -name '*.ipynb'); do  
-            echo "Executing $notebook"  
-            jupyter nbconvert --to notebook --execute --inplace $notebook  
-          done
+          pytest

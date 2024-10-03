@@ -1,22 +1,7 @@
-# IBM Granite Kitchen
+# IBM Granite Utils
 
-The example notebooks in the Granite Kitchen (`utils` repo) cover the initial decisions and setup needed to get started using Granite models. 
-
-This repository also provides utilities for making recipes runnable in a variety of environments, including Google Colab.
-
-## Inference Platforms
-
-1. [Replicate](/recipes/Getting_Started/Getting_Started_with_Replicate.ipynb)
-1. [Ollama](/recipes/Getting_Started/Getting_Started_with_Ollama.ipynb)
-1. [WatsonX](/recipes/Getting_Started/Getting_Started_with_WatsonX.ipynb)
-
-## Components
-
-### LangChain
-
-1. [LLMs](/recipes/Components/Langchain_LLMs.ipynb)
-1. [Vector Stores](/recipes/Components/Langchain_Vector_Stores.ipynb)
-1. [Embeddings Models](/recipes/Components/Langchain_Embeddings_Models.ipynb)
+This repository provides various utilities for use in recipes, including:
+- making recipes runnable in a variety of environments, such as Google Colab.
 
 ## Contributing
 
