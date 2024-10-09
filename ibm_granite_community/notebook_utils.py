@@ -46,6 +46,9 @@ def get_env_var(var_name):
     if not env_var:
         raise ValueError(f"{var_name} could not be loaded from any source.")
 
+    # Set the environment variable for later implicit access.
+    os.environ[var_name] = env_var
+
     return env_var
 
 def set_env_var(var_name):
