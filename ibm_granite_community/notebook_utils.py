@@ -9,7 +9,7 @@ def is_colab():
         return False
 
 # Function to get the API key
-def get_env_var(var_name):
+def get_env_var(var_name, default_value=None):
     env_var = None
 
     if os.environ.get(var_name) is not None:
@@ -39,7 +39,12 @@ def get_env_var(var_name):
             print(f"{var_name} not found in .env file.")
 
     if not env_var:
-        # If neither Colab nor .env file, prompt the user for the API key
+        # If we can't find a value in the env, use the default value if provided.
+        if default_value is not None:
+            env_var = default_value
+
+    if not env_var:
+        # If neither Colab nor .env file nor default, prompt the user for the API key
         from getpass import getpass
         env_var = getpass(f"Please enter your {var_name}: ")
 

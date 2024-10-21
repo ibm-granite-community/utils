@@ -25,3 +25,7 @@ def test_env_var_dotenv(monkeypatch):
         os.environ["TEST_API_KEY"] = "xyz123"
     monkeypatch.setattr(dotenv, "load_dotenv", set_api_key)
     assert get_env_var("TEST_API_KEY") == "xyz123"
+
+# Test fallback to default environment variable
+def test_env_var_default():
+    assert get_env_var("FAVORITE_COLOR", "blue") == "blue"
