@@ -56,6 +56,6 @@ def get_env_var(var_name, default_value=None):
 
     return env_var
 
-def set_env_var(var_name):
+def set_env_var(var_name, default_value=None):
     if os.environ.get(var_name) is None:
-        os.environ[var_name] = get_env_var(var_name)
+        os.environ[var_name] = get_env_var(var_name, default_value=default_value)

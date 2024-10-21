@@ -29,3 +29,7 @@ def test_env_var_dotenv(monkeypatch):
 # Test fallback to default environment variable
 def test_env_var_default():
     assert get_env_var("FAVORITE_COLOR", "blue") == "blue"
+
+def test_set_env_var_default():
+    set_env_var("FAVORITE_COLOR", "blue")
+    assert get_env_var("FAVORITE_COLOR") == "blue"
