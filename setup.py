@@ -8,7 +8,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         "python-dotenv",
-        "pytest",
     ],
     author='The IBM Granite Community Team',
     author_email='trevor.d.grant@gmail.com',
