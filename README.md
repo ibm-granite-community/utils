@@ -3,6 +3,12 @@
 This repository provides various utilities for use in recipes, including:
 - making recipes runnable in a variety of environments, such as Google Colab.
 
+## Build Status
+
+<a href="https://github.com/ibm-granite-community/utils/actions/workflows/unit-testing.yaml">
+  <img src="https://github.com/ibm-granite-community/utils/actions/workflows/unit-testing.yaml/badge.svg" alt="Unit Tests">
+</a>
+
 ## Contributing
 
 For information about contributing to this repo, code of conduct guidelines, etc., see the community [CONTRIBUTING][CG] and [Code of Conduct][CoC] guides.  All commits require DCO-signoff (discussed [here][CG-legal]) _and_ GPG or SSH signing (discussed [here][CG-signing]).  The GitHub recommended code security settings are enforced on this public repository (which include the signing requirement).
