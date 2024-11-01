@@ -41,6 +41,11 @@ on:
         type: string
         default: |
           jupyter nbconvert --to notebook --execute --inplace {0}
+      ref:
+        description: 'Git ref to checkout'
+        required: false
+        type: string
+        default: ''
       all:
         description: 'Whether to test all notebooks or just changed notebooks'
         required: false
@@ -73,6 +78,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Find all notebook files
         if: ${{ fromJSON(inputs.all) }}
@@ -111,6 +118,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Prepare Additional Test Setup action
         if: ${{ inputs.action && hashFiles(format('{0}/action.yml',inputs.action),format('{0}/action.yaml',inputs.action)) }}
