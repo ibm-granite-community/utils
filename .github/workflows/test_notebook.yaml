@@ -40,7 +40,7 @@ on:
         required: false
         type: string
         default: |
-          jupyter nbconvert --to notebook --execute --inplace {0}
+          jupyter nbconvert --to notebook --execute --inplace "$NOTEBOOK"
       ref:
         description: 'Git ref to checkout'
         required: false
@@ -80,7 +80,7 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      test: ${{ fromJSON(inputs.all) || steps.changed-files.outputs.any_changed }}
+      test: ${{ inputs.all || steps.changed-files.outputs.any_changed }}
       notebooks: ${{ steps.json.outputs.notebooks }}
       runs_on: ${{ steps.json.outputs.runs_on }}
       python_versions: ${{ steps.json.outputs.python_versions }}
@@ -91,7 +91,7 @@ jobs:
           ref: ${{ inputs.ref }}
 
       - name: Find all notebook files
-        if: ${{ fromJSON(inputs.all) }}
+        if: ${{ inputs.all }}
         id: all-files
         uses: tj-actions/glob@v22
         with:
@@ -99,7 +99,7 @@ jobs:
           files: ${{ inputs.notebook }}
 
       - name: Find changed notebook files
-        if: ${{ !fromJSON(inputs.all) }}
+        if: ${{ !inputs.all }}
         id: changed-files
         uses: tj-actions/changed-files@v45
         with:
@@ -109,9 +109,13 @@ jobs:
       - name: Convert inputs to JSON
         id: json
         run: |
-          jq -ncr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | tostring | ("notebooks=" + .)' --args "${{ fromJSON(inputs.all) && steps.all-files.outputs.paths || steps.changed-files.outputs.all_changed_files }}" >> "$GITHUB_OUTPUT"
-          jq -ncr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | tostring | ("runs_on=" + .)' --args "${{ inputs.runs-on }}" >> "$GITHUB_OUTPUT"
-          jq -ncr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | tostring | ("python_versions=" + .)' --args "${{ inputs.python-versions }}" >> "$GITHUB_OUTPUT"
+          jq -ncr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | tostring | ("notebooks=" + .)' --args "$NOTEBOOKS" >> "$GITHUB_OUTPUT"
+          jq -ncr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | tostring | ("runs_on=" + .)' --args "$RUNS_ON" >> "$GITHUB_OUTPUT"
+          jq -ncr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | tostring | ("python_versions=" + .)' --args "$PYTHON_VERSIONS" >> "$GITHUB_OUTPUT"
+        env:
+          NOTEBOOKS: ${{ inputs.all && steps.all-files.outputs.paths || steps.changed-files.outputs.all_changed_files }}
+          RUNS_ON: ${{ inputs.runs-on }}
+          PYTHON_VERSIONS: ${{ inputs.python-versions }}
 
   test:
     needs:
@@ -135,7 +139,9 @@ jobs:
         run: |
           mkdir -p .github/tmp/actions/test-setup
           echo '*' > .github/tmp/.gitignore
-          cp -Rpv "${{ inputs.action }}"/* .github/tmp/actions/test-setup
+          cp -Rpv "$ACTION"/* .github/tmp/actions/test-setup
+        env:
+          ACTION: ${{ inputs.action }}
 
       - name: Additional Test Setup
         if: ${{ hashFiles('.github/tmp/actions/test-setup/action.yml','.github/tmp/actions/test-setup/action.yaml') }}
@@ -149,12 +155,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ${{ inputs.pip-install }}
+          python -m pip install -r <(echo "$PIP_INSTALL" | xargs -n1)
+        env:
+          PIP_INSTALL: ${{ inputs.pip-install }}
 
       - name: Test ${{ matrix.notebook }}
         run: |
-          ${{ format(inputs.command, matrix.notebook) }}
+          ${{ inputs.command }}
         env:
+          NOTEBOOK: ${{ matrix.notebook }}
           GRANITE_TESTING: ${{ vars.GRANITE_TESTING }}
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
           WATSONX_APIKEY: ${{ secrets.WATSONX_APIKEY }}
