@@ -56,6 +56,15 @@ on:
         required: false
         type: string
         default: ''
+    secrets:
+      REPLICATE_API_TOKEN:
+        required: false
+      WATSONX_APIKEY:
+        required: false
+      WATSONX_PROJECT_ID:
+        required: false
+      WATSONX_URL:
+        required: false
 
 env:
   LC_ALL: en_US.UTF-8
