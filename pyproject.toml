@@ -5,8 +5,8 @@ requires = ["setuptools>=70.1.0", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ibm_granite_community-utils"
-authors = [{ name = "The IBM Granite Community Team", email = "trevor.d.grant@gmail.com" }]
+name = "ibm-granite-community-utils"
+authors = [{ name = "The IBM Granite Community Team", email = "granite.cookbooks@ibm.com" }]
 description = "A package of utility functions for IBM Granite Community notebooks."
 readme = "README.md"
 license = { text = "Apache-2.0" }
