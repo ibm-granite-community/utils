@@ -156,13 +156,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r <(echo "$PIP_INSTALL" | xargs -n1)
+          python -m venv --upgrade-deps .venv
+          source .venv/bin/activate
+          python -m pip install --require-virtualenv --requirement <(echo "$PIP_INSTALL" | xargs -n1)
         env:
           PIP_INSTALL: ${{ inputs.pip-install }}
 
       - name: Test ${{ matrix.notebook }}
         run: |
+          source .venv/bin/activate
           ${{ inputs.command }}
         env:
           NOTEBOOK: ${{ matrix.notebook }}
