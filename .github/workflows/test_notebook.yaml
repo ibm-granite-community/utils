@@ -40,7 +40,7 @@ on:
         required: false
         type: string
         default: |
-          jupyter nbconvert --to notebook --execute --inplace "$NOTEBOOK"
+          jupyter nbconvert --to markdown --execute --stdout "$NOTEBOOK"
       ref:
         description: 'Git ref to checkout'
         required: false
