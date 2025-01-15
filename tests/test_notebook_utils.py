@@ -1,48 +1,51 @@
 # Utils tests
 
 import getpass
-import os
+import pathlib
 
-import dotenv
+from assertpy import assert_that
 
 from ibm_granite_community.notebook_utils import get_env_var, set_env_var
 
 
 # Test retrieval of new environment variable
-def test_env_var_set():
-    os.environ["TEST_VAR"] = "bartholomew"
-    assert get_env_var("TEST_VAR") == "bartholomew"
+def test_env_var_set(monkeypatch):
+    monkeypatch.setenv("TEST_VAR", "bartholomew")
+
+    assert_that(get_env_var("TEST_VAR")).is_equal_to("bartholomew")
 
 
 # Test retrieval of existing environment variable
 def test_env_var_preset():
-    assert get_env_var("REPLICATE_API_TOKEN") is not None
+    assert_that(get_env_var("PATH")).is_not_none()
 
 
 # Test acquisition of environment variable using getpass
 def test_env_var_getpass(monkeypatch):
     monkeypatch.setattr(getpass, "getpass", lambda prompt: "abc123")
-    assert get_env_var("APIKEY") == "abc123"
+
+    assert_that(get_env_var("APIKEY")).is_equal_to("abc123")
 
 
 # Test retrieval of environment variable from .env file,
 # for cases where there is a .env file, and assuming dotenv works
-def test_env_var_dotenv(monkeypatch):
-    assert not os.path.exists(".env")
-    monkeypatch.setattr(os.path, "exists", lambda x: True)
+def test_env_var_dotenv():
+    env_path = pathlib.Path(".env")
 
-    def set_api_key():
-        os.environ["TEST_API_KEY"] = "xyz123"
-
-    monkeypatch.setattr(dotenv, "load_dotenv", set_api_key)
-    assert get_env_var("TEST_API_KEY") == "xyz123"
+    assert_that(str(env_path)).does_not_exist()
+    try:
+        env_path.write_text("TEST_API_KEY=xyz123", encoding="utf-8")
+        assert_that(get_env_var("TEST_API_KEY")).is_equal_to("xyz123")
+    finally:
+        env_path.unlink()
 
 
 # Test fallback to default environment variable
 def test_env_var_default():
-    assert get_env_var("FAVORITE_COLOR", "blue") == "blue"
+    assert_that(get_env_var("FAVORITE_COLOR", "blue")).is_equal_to("blue")
+    assert_that(get_env_var("FAVORITE_COLOR")).is_equal_to("blue")
 
 
 def test_set_env_var_default():
-    set_env_var("FAVORITE_COLOR", "blue")
-    assert get_env_var("FAVORITE_COLOR") == "blue"
+    set_env_var("FAVORITE_COLOR2", "green")
+    assert_that(get_env_var("FAVORITE_COLOR2")).is_equal_to("green")
