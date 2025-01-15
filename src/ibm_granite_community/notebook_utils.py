@@ -1,6 +1,8 @@
 import importlib.util
 import os
 
+from dotenv import find_dotenv, load_dotenv
+
 
 # Function to check if the notebook is running in Google Colab
 def is_colab() -> bool:
@@ -11,12 +13,30 @@ def is_colab() -> bool:
 
 
 # Function to get the API key
-def get_env_var(var_name: str, default_value: str | None = None) -> str | None:
-    # pylint: disable=import-outside-toplevel
-    env_var: str | None = None
+def get_env_var(var_name: str, default_value: str | None = None) -> str:
+    """Return the value of the environment variable.
 
-    if os.environ.get(var_name) is not None:
-        return os.environ.get(var_name)
+    If the environment variable is not set, search in colab secrets and then .env file.
+    If still not found, and default_value is set, the default value is used.
+    Otherwise call getpass to ask the user for a value.
+
+    If a value was found in any of the search locations, the value is stored in os.environ.
+
+    Args:
+        var_name (str): The environment variable name
+        default_value (str | None, optional): A default value to use. Defaults to None.
+
+    Raises:
+        ValueError: If a value cannot be located.
+
+    Returns:
+        str: The environment variable value.
+    """
+    # pylint: disable=import-outside-toplevel
+    env_var: str | None = os.environ.get(var_name)
+
+    if env_var is not None:
+        return env_var
 
     if is_colab():
         # If in Google Colab, try to get the API key from a secret
@@ -30,18 +50,15 @@ def get_env_var(var_name: str, default_value: str | None = None) -> str | None:
         except userdata.SecretNotFoundError:
             print(f"{var_name} not found in Google Colab secrets.")
 
-    if not env_var and os.path.exists(".env"):
+    if not env_var:
         # Try to load API key from .env file
-        try:
-            from dotenv import load_dotenv
-
-            load_dotenv()
-        except ModuleNotFoundError:
-            print("Module 'dotenv' not found. Please install it using 'pip install python-dotenv'.")
-        env_var = os.getenv(var_name)
-        if env_var:
-            print(f"{var_name} loaded from .env file.")
-        else:
+        dotenv_path = find_dotenv(usecwd=True)  # .env can be in a parent folder
+        if dotenv_path:
+            load_dotenv(dotenv_path=dotenv_path)
+            env_var = os.environ.get(var_name)
+            if env_var:
+                print(f"{var_name} loaded from .env file.")
+                return env_var
             print(f"{var_name} not found in .env file.")
 
     if not env_var and default_value is not None:
@@ -64,7 +81,12 @@ def get_env_var(var_name: str, default_value: str | None = None) -> str | None:
 
 
 def set_env_var(var_name: str, default_value: str | None) -> None:
-    if os.environ.get(var_name) is None:
-        value = get_env_var(var_name, default_value=default_value)
-        if value is not None:
-            os.environ[var_name] = value
+    """Set the value of the environment variable if it is not set.
+
+    Note: This method has the same behavior as get_env_var.
+
+    Args:
+        var_name (str): The environment variable name
+        default_value (str | None): A default value to use.
+    """
+    get_env_var(var_name, default_value)
