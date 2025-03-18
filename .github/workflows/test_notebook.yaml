@@ -103,7 +103,7 @@ jobs:
       - name: Find changed notebook files
         if: ${{ !inputs.all }}
         id: changed-files
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           files_from_source_file: ${{ inputs.notebook-lists }}
           files: ${{ inputs.notebook }}
