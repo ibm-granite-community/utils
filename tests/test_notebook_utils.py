@@ -3,9 +3,10 @@
 import getpass
 import pathlib
 
+import pytest
 from assertpy import assert_that
 
-from ibm_granite_community.notebook_utils import get_env_var, set_env_var
+from ibm_granite_community.notebook_utils import get_env_var, set_env_var, wrap_text
 
 
 # Test retrieval of new environment variable
@@ -49,3 +50,20 @@ def test_env_var_default():
 def test_set_env_var_default():
     set_env_var("FAVORITE_COLOR2", "green")
     assert_that(get_env_var("FAVORITE_COLOR2")).is_equal_to("green")
+
+
+@pytest.mark.parametrize("width,indent", [(30, ""), (50, ""), (80, ""), (30, "  "), (50, "* "), (80, "> "), (200, ""), (200, "> ")])
+def test_wrap_text(width: int, indent: str):
+    wide_string = """\
+This string is long and thus should be wrapped so that there are multiple lines each less than the requested width.
+"""
+    wrapped = wrap_text(wide_string, width=width, indent=indent)
+    splitlines = wrapped.splitlines()
+    if len(wide_string) > width:
+        assert_that(len(splitlines), "len(splitlines)").is_greater_than_or_equal_to(2)
+    else:
+        assert_that(len(splitlines), "len(splitlines)").is_equal_to(1)
+    for line in splitlines:
+        assert_that(len(line), "len(line)").is_less_than_or_equal_to(width)
+        if len(indent) > 0:
+            assert_that(line).starts_with(indent)
