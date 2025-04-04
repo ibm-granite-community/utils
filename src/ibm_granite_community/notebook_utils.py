@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import textwrap
 
 from dotenv import find_dotenv, load_dotenv
 
@@ -90,3 +91,19 @@ def set_env_var(var_name: str, default_value: str | None) -> None:
         default_value (str | None): A default value to use.
     """
     get_env_var(var_name, default_value)
+
+
+def wrap_text(text: str, width: int = 80, indent: str = "") -> str:
+    """Wrap the specified text to display better in the notebook output.
+
+    Args:
+        text (str): The text string to wrap. This string can include multiple lines.
+        width (int, optional): The wrapping width. Defaults to 80.
+        indent (str, optional): The indent string to use for each line in the result. Defaults to "".
+
+    Returns:
+        str: The specified string wrapped to the specified width and indented with the specified indent.
+    """
+    lines = text.splitlines()
+    wrapped_lines = (textwrap.fill(line, width, initial_indent=indent, subsequent_indent=indent) for line in lines)
+    return "\n".join(wrapped_lines)
