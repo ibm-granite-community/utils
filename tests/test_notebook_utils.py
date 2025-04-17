@@ -6,7 +6,7 @@ import pathlib
 import pytest
 from assertpy import assert_that
 
-from ibm_granite_community.notebook_utils import get_env_var, set_env_var, wrap_text
+from ibm_granite_community.notebook_utils import escape_f_string, get_env_var, set_env_var, wrap_text
 
 
 # Test retrieval of new environment variable
@@ -67,3 +67,17 @@ This string is long and thus should be wrapped so that there are multiple lines 
         assert_that(len(line), "len(line)").is_less_than_or_equal_to(width)
         if len(indent) > 0:
             assert_that(line).starts_with(indent)
+
+
+@pytest.mark.parametrize(
+    "f_string,expected,field_names",
+    [
+        ("foo", "foo", []),
+        ("foo {bar}", "foo {bar}", ["bar"]),
+        ("foo {bar}", "foo {{bar}}", []),
+        ("foo {bar} {baz} fum", "foo {bar} {{baz}} fum", ["bar"]),
+        ("foo {bar} {baz} fum", "foo {bar} {baz} fum", ["baz", "bar"]),
+    ],
+)
+def test_escape_f_string(f_string: str, expected: str, field_names: list[str]):
+    assert_that(escape_f_string(f_string, *field_names)).is_equal_to(expected)

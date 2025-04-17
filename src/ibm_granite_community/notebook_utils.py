@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import textwrap
+from string import Formatter
 
 from dotenv import find_dotenv, load_dotenv
 
@@ -107,3 +108,33 @@ def wrap_text(text: str, width: int = 80, indent: str = "") -> str:
     lines = text.splitlines()
     wrapped_lines = (textwrap.fill(line, width, initial_indent=indent, subsequent_indent=indent) for line in lines)
     return "\n".join(wrapped_lines)
+
+
+def escape_f_string(f_string: str, *field_names: str) -> str:
+    """Escape non-field names in the specified f-string.
+
+    This can be necessary when the f-string contains JSON documents.
+
+    Args:
+        f_string (str): The f-string to escape.
+        field_names: The field names which are part of the f-string and should not be escaped.
+
+    Returns:
+        str: The f-string with non-field names escaped in double braces.
+    """
+    result = []
+    for literal_text, field_name, format_spec, conversion in Formatter().parse(f_string):
+        if literal_text:
+            result.append(literal_text)
+        if field_name is not None:
+            is_field = field_name in field_names
+            result.append("{" if is_field else "{{")
+            result.append(field_name)
+            if conversion:
+                result.append("!")
+                result.append(conversion)
+            if format_spec:
+                result.append(":")
+                result.append(format_spec)
+            result.append("}" if is_field else "}}")
+    return "".join(result)
