@@ -56,6 +56,12 @@ on:
         required: false
         type: string
         default: ''
+      free-disk-space:
+        description: 'Whether to free disk space'
+        required: false
+        type: string
+        default: ''
+
     secrets:
       REPLICATE_API_TOKEN:
         required: false
@@ -131,6 +137,11 @@ jobs:
         python: ${{ fromJSON(needs.prepare.outputs.python_versions) }}
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Free Disk Space
+        if: ${{ inputs.free-disk-space }}
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with: ${{ fromJSON(startsWith(inputs.free-disk-space, '{') && inputs.free-disk-space || '{}') }}
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
