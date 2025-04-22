@@ -93,15 +93,20 @@ jobs:
       runs_on: ${{ steps.json.outputs.runs_on }}
       python_versions: ${{ steps.json.outputs.python_versions }}
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@c95a14d0e5bab51a9f56296a4eb0e416910cd350 # v2.10.3
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.ref }}
 
       - name: Find all notebook files
         if: ${{ inputs.all }}
         id: all-files
-        uses: tj-actions/glob@v22
+        uses: tj-actions/glob@2deae40528141fc53131606d56b4e4ce2a486b29 # v22.0.2
         with:
           files-from-source-file: ${{ inputs.notebook-lists }}
           files: ${{ inputs.notebook }}
@@ -109,7 +114,7 @@ jobs:
       - name: Find changed notebook files
         if: ${{ !inputs.all }}
         id: changed-files
-        uses: tj-actions/changed-files@v46
+        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
           files_from_source_file: ${{ inputs.notebook-lists }}
           files: ${{ inputs.notebook }}
@@ -137,13 +142,18 @@ jobs:
         python: ${{ fromJSON(needs.prepare.outputs.python_versions) }}
     runs-on: ${{ matrix.os }}
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@c95a14d0e5bab51a9f56296a4eb0e416910cd350 # v2.10.3
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Free Disk Space
         if: ${{ inputs.free-disk-space }}
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with: ${{ fromJSON(startsWith(inputs.free-disk-space, '{') && inputs.free-disk-space || '{}') }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.ref }}
 
@@ -161,7 +171,7 @@ jobs:
         uses: ./.github/tmp/actions/test-setup
 
       - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: ${{ matrix.python }}
 
