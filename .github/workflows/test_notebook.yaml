@@ -187,6 +187,8 @@ jobs:
         env:
           PIP_INSTALL: ${{ format('pip setuptools {0}', inputs.pip-install) }}
           REQUIREMENTS_TXT: ${{ format('{0}/requirements.txt', runner.temp) }}
+          UV_CONSTRAINT: ${{ hashFiles('constraints.txt') && format('{0}/constraints.txt', github.workspace) || '' }}
+          PIP_CONSTRAINT: ${{ hashFiles('constraints.txt') && format('{0}/constraints.txt', github.workspace) || '' }}
           NOTEBOOK: ${{ matrix.notebook }}
           GRANITE_TESTING: ${{ vars.GRANITE_TESTING }}
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
