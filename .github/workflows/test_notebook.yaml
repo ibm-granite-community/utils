@@ -183,7 +183,7 @@ jobs:
       - name: Test ${{ matrix.notebook }}
         run: |
           uv pip compile --output-file "$REQUIREMENTS_TXT" <(echo "$PIP_INSTALL" | xargs -n1)
-          uv run --with-requirements "$REQUIREMENTS_TXT" -- ${{ inputs.command }}
+          uv run --no-project --with-requirements "$REQUIREMENTS_TXT" -- ${{ inputs.command }}
         env:
           PIP_INSTALL: ${{ format('pip setuptools {0}', inputs.pip-install) }}
           REQUIREMENTS_TXT: ${{ format('{0}/requirements.txt', runner.temp) }}
