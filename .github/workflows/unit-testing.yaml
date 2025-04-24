@@ -10,7 +10,7 @@ on:
       - '**/*.py'
       - 'pyproject.toml'
       - 'tox.ini'
-      - '.github/workflows/unit-testing.yml' # This workflow
+      - '.github/workflows/unit-testing.yaml' # This workflow
   pull_request:
     branches:
       - main
@@ -18,7 +18,7 @@ on:
       - '**/*.py'
       - 'pyproject.toml'
       - 'tox.ini'
-      - '.github/workflows/unit-testing.yml' # This workflow
+      - '.github/workflows/unit-testing.yaml' # This workflow
 
 env:
   LC_ALL: en_US.UTF-8
@@ -49,19 +49,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      - name: 'Setup uv with Python ${{ matrix.python }}'
+        uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
         with:
-          python-version: "${{ matrix.python }}"
-
-      - name: Install tox
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox tox-gh
+          python-version: ${{ matrix.python }}
+          enable-cache: false
 
       - name: Unit tests
         run: |
-          tox
+          uvx --with tox-gh -- tox
 
   lint:
     name: "${{ matrix.lint.name }}"
@@ -76,15 +72,15 @@ jobs:
         lint:
           - name: 'ruff'
             commands: |
-              tox -e ruffcheck
+              uvx -- tox -e ruffcheck
           - name: 'pylint'
             commands: |
               echo "::add-matcher::.github/workflows/matchers/pylint.json"
-              tox -e pylint
+              uvx -- tox -e pylint
           - name: 'mypy'
             commands: |
               echo "::add-matcher::.github/workflows/matchers/mypy.json"
-              tox -e mypy
+              uvx -- tox -e mypy
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
@@ -94,15 +90,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      - name: 'Setup uv with Python ${{ matrix.python }}'
+        uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
         with:
-          python-version: "${{ matrix.python }}"
-
-      - name: Install tox
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox tox-gh
+          python-version: ${{ matrix.python }}
+          enable-cache: false
 
       - name: "${{ matrix.lint.name }}"
         run: |
