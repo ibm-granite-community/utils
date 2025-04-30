@@ -9,3 +9,8 @@ updates:
     - "/"
     schedule:
       interval: "daily"
+  - package-ecosystem: "docker"
+    directories:
+    - "/.github/workflows"
+    schedule:
+      interval: "daily"

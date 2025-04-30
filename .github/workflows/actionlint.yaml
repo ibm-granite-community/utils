@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: Lint GitHub Actions workflows
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - '.github/workflows/*.ya?ml'
+      - '.github/workflows/actionlint.*' # This workflow
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - '.github/workflows/*.ya?ml'
+      - '.github/workflows/actionlint.*' # This workflow
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            auth.docker.io:443
+            github.com:443
+            production.cloudflare.docker.com:443
+            registry-1.docker.io:443
+
+      - name: "Checkout"
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: "Download actionlint"
+        run: |
+          docker build --tag actionlint - < .github/workflows/actionlint.dockerfile
+
+      - name: "Check workflow files"
+        run: |
+          echo "::add-matcher::.github/workflows/matchers/actionlint.json"
+          docker run --volume="${{ github.workspace }}:/repo" --workdir=/repo actionlint -color
