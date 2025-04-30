@@ -64,7 +64,7 @@ jobs:
 
       - name: Unit tests
         run: |
-          uvx --with tox-gh -- tox
+          uvx --with tox-uv --with tox-gh -- tox
 
   lint:
     name: "${{ matrix.lint.name }}"
@@ -79,15 +79,15 @@ jobs:
         lint:
           - name: 'ruff'
             commands: |
-              uvx -- tox -e ruffcheck
+              uvx --with tox-uv -- tox -e ruffcheck
           - name: 'pylint'
             commands: |
               echo "::add-matcher::.github/workflows/matchers/pylint.json"
-              uvx -- tox -e pylint
+              uvx --with tox-uv -- tox -e pylint
           - name: 'mypy'
             commands: |
               echo "::add-matcher::.github/workflows/matchers/mypy.json"
-              uvx -- tox -e mypy
+              uvx --with tox-uv -- tox -e mypy
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
