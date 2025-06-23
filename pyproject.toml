@@ -23,6 +23,8 @@ classifiers = [
 ]
 dependencies = [
     "python-dotenv",
+    "langchain_core",
+    "typing_extensions",
 ]
 dynamic = ["version"]
 
@@ -31,9 +33,107 @@ homepage = "https://github.com/ibm-granite-community"
 source = "https://github.com/ibm-granite-community/utils"
 issues = "https://github.com/ibm-granite-community/utils/issues"
 
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest_asyncio",
+    "assertpy",
+    "types-assertpy",
+    "transformers",
+    "jinja2",
+]
+pytest = [
+    {include-group = "test"},
+]
+pylint = [
+    "pylint",
+    {include-group = "test"},
+]
+ruff = [
+    "ruff",
+    {include-group = "test"},
+]
+mypy = [
+    "mypy",
+    {include-group = "test"},
+]
+
 [tool.setuptools_scm]
 version_file = "src/ibm_granite_community/_version.py"
 local_scheme = "no-local-version"                   # do not include +gREV local version, required for Test PyPI upload
+
+[tool.tox]
+# py3-unit runs unit tests with 'python3'
+# py311-unit runs the same tests with 'python3.11'
+env_list = [
+    "ruff",
+    "pylint",
+    "mypy",
+    "py3-unit",
+]
+requires = ["tox>=4.22"]
+labels = { lint = ["ruff", "pylint", "mypy"] }
+
+[tool.tox.env_run_base]
+description = "Run tests with pytest"
+package = "wheel"
+wheel_build_env = "pkg"
+setenv = { REPLICATE_API_TOKEN = "testing" }
+dependency_groups = [
+    "pytest",
+]
+commands = [
+    ["{envpython}", "-m", "pytest", { replace = "posargs", default = ["tests"], extend = true }],
+]
+
+[tool.tox.env.pylint]
+description = "Lint with pylint"
+dependency_groups = [
+    "pylint",
+]
+commands = [
+    ["{envpython}", "-m", "pylint", { replace = "posargs", default = ["src", "tests"], extend = true }],
+]
+
+[tool.tox.env.ruff]
+description = "Reformat and fix code with Ruff"
+skip_install = true
+skip_sdist = true
+dependency_groups = [
+    "ruff",
+]
+commands = [
+    ["ruff", "check", "--fix"],
+    ["ruff", "format"],
+]
+
+[tool.tox.env.ruffcheck]
+description = "Check code with Ruff"
+skip_install = true
+skip_sdist = true
+dependency_groups = [
+    "ruff",
+]
+commands = [
+    ["ruff", "check", "--diff"],
+    ["ruff", "format", "--check"],
+]
+
+[tool.tox.env.mypy]
+description = "Python type checking with mypy"
+namespace_packages = true
+explicit_package_bases = true
+dependency_groups = [
+    "mypy",
+]
+commands = [
+    ["{envpython}", "-m", "mypy", { replace = "posargs", default = ["src", "tests"], extend = true }],
+]
+
+[tool.tox.gh.python]
+"3.12" = ["py312-unit"]
+"3.11" = ["py311-unit"]
+"3.10" = ["py310-unit"]
 
 [tool.mypy]
 python_version = "3.10"

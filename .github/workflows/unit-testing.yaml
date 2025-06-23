@@ -9,7 +9,6 @@ on:
     paths:
       - '**/*.py'
       - 'pyproject.toml'
-      - 'tox.ini'
       - '.github/workflows/unit-testing.yaml' # This workflow
   pull_request:
     branches:
@@ -17,7 +16,6 @@ on:
     paths:
       - '**/*.py'
       - 'pyproject.toml'
-      - 'tox.ini'
       - '.github/workflows/unit-testing.yaml' # This workflow
 
 env:
