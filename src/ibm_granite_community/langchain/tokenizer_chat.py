@@ -80,7 +80,11 @@ def _conversation_message(message: BaseMessage) -> dict[str, Any]:
         raise ValueError(msg)  # noqa: TRY004
 
     conversation_message["role"] = role
-    conversation_message["content"] = message.text()
+    conversation_message["content"] = (
+        message.text()
+        if not isinstance(message.content, str) and all(isinstance(item, str) or (item.get("type") == "text" and isinstance(item.get("text"), str)) for item in message.content)
+        else message.content
+    )
     return conversation_message
 
 
