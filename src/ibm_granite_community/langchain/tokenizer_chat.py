@@ -241,7 +241,7 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
         return TokenizerChatPromptValue(text=prompt, messages=messages)
 
     @override
-    def format_prompt(self, **kwargs: Any) -> PromptValue:
+    def format_prompt(self, **kwargs: Any) -> PromptValue:  # type: ignore[override]
         """Format prompt using tokenizer apply_chat_template.
             Should return a PromptValue.
 
@@ -257,7 +257,7 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
         return self._apply_chat_template(messages, **kwargs)
 
     @override
-    async def aformat_prompt(self, **kwargs: Any) -> PromptValue:
+    async def aformat_prompt(self, **kwargs: Any) -> PromptValue:  # type: ignore[override]
         """Async format prompt using tokenizer apply_chat_template.
             Should return a PromptValue.
 
