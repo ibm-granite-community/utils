@@ -58,7 +58,7 @@ class TestTokenizerChatTemplate:
         prompt_template = TokenizerChatPromptTemplate.from_messages(
             [
                 SystemMessage(content="system content"),
-                HumanMessage(content=[{"type": "text", "text": "user content1\n"}, {"type": "text", "text": "user content2\n"}]),
+                HumanMessage(content="user content1\nuser content2\n"),
                 ChatMessage(role="User", content="chat content"),
                 AIMessage(content="assistant content"),
             ],
@@ -80,7 +80,7 @@ class TestTokenizerChatTemplate:
         prompt_template = TokenizerChatPromptTemplate.from_messages(
             [
                 SystemMessage(content="system content"),
-                HumanMessage(content=[{"type": "text", "text": "user content1\n"}, {"type": "text", "text": "user content2\n"}]),
+                HumanMessage(content="user content1\nuser content2\n"),
                 ChatMessage(role="User", content="chat content"),
                 AIMessage(content="assistant content"),
             ],
