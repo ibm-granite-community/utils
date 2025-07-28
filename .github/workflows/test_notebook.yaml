@@ -27,6 +27,7 @@ on:
         type: string
         default: >-
           3.11
+          3.12
       pip-install:
         description: 'Space-separated dependencies to pip install'
         required: false
@@ -35,6 +36,7 @@ on:
           nbconvert
           nbclient
           ipykernel
+          ipywidgets
       command:
         description: 'Newline-separated commands to test notebook'
         required: false
