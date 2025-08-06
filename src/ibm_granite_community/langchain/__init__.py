@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from .tokenizer_chat import TokenizerChatPromptTemplate, create_stuff_documents_chain
+from .chains.combine_documents import create_stuff_documents_chain
+from .prompts import TokenizerChatPromptTemplate
 
 __all__ = [
     "TokenizerChatPromptTemplate",

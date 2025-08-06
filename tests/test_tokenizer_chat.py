@@ -7,14 +7,10 @@ import re
 
 import pytest
 from assertpy import assert_that
-from langchain_core.documents import Document
-from langchain_core.language_models import LanguageModelInput
 from langchain_core.messages import AIMessage, ChatMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_core.prompt_values import PromptValue
 from langchain_core.prompts import MessagesPlaceholder
-from langchain_core.runnables import RunnableLambda
 
-from ibm_granite_community.langchain import TokenizerChatPromptTemplate, create_stuff_documents_chain
+from ibm_granite_community.langchain.prompts import TokenizerChatPromptTemplate
 
 
 # Method to use as a tool
@@ -59,7 +55,7 @@ class TestTokenizerChatTemplate:
             [
                 SystemMessage(content="system content"),
                 HumanMessage(content="user content1\nuser content2\n"),
-                ChatMessage(role="User", content="chat content"),
+                ChatMessage(role="user", content="chat content"),
                 AIMessage(content="assistant content"),
             ],
             tokenizer=tokenizer,
@@ -81,7 +77,7 @@ class TestTokenizerChatTemplate:
             [
                 SystemMessage(content="system content"),
                 HumanMessage(content="user content1\nuser content2\n"),
-                ChatMessage(role="User", content="chat content"),
+                ChatMessage(role="user", content="chat content"),
                 AIMessage(content="assistant content"),
             ],
             tokenizer=tokenizer,
@@ -102,7 +98,7 @@ class TestTokenizerChatTemplate:
             [
                 SystemMessage(content="system content"),
                 HumanMessage(content="user content"),
-                ChatMessage(role="User", content="chat content"),
+                ChatMessage(role="user", content="chat content"),
                 AIMessage(content="assistant content"),
                 MessagesPlaceholder("tool_results"),
             ],
@@ -150,7 +146,7 @@ class TestTokenizerChatTemplate:
             [
                 SystemMessage(content="system content"),
                 HumanMessage(content="user content"),
-                ChatMessage(role="User", content="chat content"),
+                ChatMessage(role="user", content="chat content"),
                 AIMessage(content="assistant content"),
                 MessagesPlaceholder("tool_results"),
             ],
@@ -237,63 +233,5 @@ class TestTokenizerChatTemplate:
             assert_that(text)
             .matches(r"(?ms)<\|start_of_role\|>user<\|end_of_role\|>\s*?user content\s*?<\|end_of_text\|>")
             .contains(*(document["text"] for document in documents))
-            .ends_with("<|start_of_role|>assistant<|end_of_role|>")
-        )
-
-
-def identity_llm(prompt: LanguageModelInput) -> str:
-    """Mock llm which returns the prompt string as its output"""
-    if isinstance(prompt, PromptValue):
-        return prompt.to_string()
-    if isinstance(prompt, str):
-        return prompt
-    raise ValueError
-
-
-class TestDocumentsChain:
-    @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    def test_documents_chain(self, tokenizer, document_variable_name):
-        assert_that(tokenizer).is_not_none()
-        llm = RunnableLambda(identity_llm)
-        prompt_template = TokenizerChatPromptTemplate.from_template(
-            "user content",
-            tokenizer=tokenizer,
-        )
-        chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name)
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
-        text = chain.invoke(input={document_variable_name: documents})
-        (
-            assert_that(text)
-            .matches(r"(?ms)<\|start_of_role\|>user<\|end_of_role\|>\s*?user content\s*?<\|end_of_text\|>")
-            .contains(*(document.page_content for document in documents))
-            .ends_with("<|start_of_role|>assistant<|end_of_role|>")
-        )
-
-    def test_documents_chain_bind(self, tokenizer):
-        assert_that(tokenizer).is_not_none()
-        llm = RunnableLambda(identity_llm)
-        prompt_template = TokenizerChatPromptTemplate.from_messages(
-            messages=[
-                MessagesPlaceholder("user_content"),
-            ],
-            tokenizer=tokenizer,
-        ).bind(
-            user_content=[
-                HumanMessage(content="user content"),
-            ]
-        )
-        chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template)
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
-        text = chain.invoke(input={"context": documents})
-        (
-            assert_that(text)
-            .matches(r"(?ms)<\|start_of_role\|>user<\|end_of_role\|>\s*?user content\s*?<\|end_of_text\|>")
-            .contains(*(document.page_content for document in documents))
             .ends_with("<|start_of_role|>assistant<|end_of_role|>")
         )
