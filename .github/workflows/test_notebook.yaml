@@ -78,6 +78,7 @@ on:
 
 env:
   LC_ALL: en_US.UTF-8
+  UV_NO_PROGRESS: 'true'
 
 defaults:
   run:
