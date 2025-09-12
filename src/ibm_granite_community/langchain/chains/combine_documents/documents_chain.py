@@ -12,11 +12,14 @@ prompt with the model's tokenizer.
 from typing import Any
 
 from langchain_core.documents import Document
-from langchain_core.language_models import LanguageModelInput, LanguageModelLike, LanguageModelOutput
+from langchain_core.language_models import LanguageModelLike, LanguageModelOutput
+from langchain_core.messages import BaseMessage, ChatMessage
 from langchain_core.output_parsers import BaseOutputParser, StrOutputParser
-from langchain_core.prompt_values import PromptValue
+from langchain_core.prompt_values import ChatPromptValue, PromptValue
 from langchain_core.prompts import BasePromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, chain
+
+from ibm_granite_community.langchain.utils import is_chat_model
 
 PromptTemplateLike = BasePromptTemplate | Runnable[dict[str, Any], PromptValue]
 
@@ -27,6 +30,7 @@ def create_stuff_documents_chain(
     *,
     output_parser: BaseOutputParser | None = None,
     document_variable_name: str = "context",
+    use_document_roles: bool = False,
 ) -> Runnable[dict[str, Any], Any]:
     """Create a chain for passing a list of Documents to a prompt and a model
         so each can use documents.
@@ -39,6 +43,10 @@ def create_stuff_documents_chain(
         output_parser: Output parser. Defaults to StrOutputParser.
         document_variable_name: Variable name to use for the input documents to be prepared.
             Defaults to "context" which is the name used by create_retrieval_chain.
+        use_document_roles: Extends the messages of the prompt value with document role messages for the retrieved documents.
+            Some chat completion APIs do not have a means to pass documents in a chat completion
+            request, so we model the documents as roles and add to the messages. This requires
+            the model's chat template to understand the document role. Defaults to False.
 
     Returns:
         An LCEL Runnable. The input is a dictionary that must have a "context" key (override by
@@ -50,19 +58,30 @@ def create_stuff_documents_chain(
     _output_parser = output_parser or StrOutputParser()
 
     @chain
-    def prepare_documents(inputs: dict[str, Any]) -> list[dict[str, str]]:
+    def prepare_documents(inputs: dict[str, Any]) -> list[dict[str, Any]]:
         documents: list[Document] = inputs[document_variable_name]
         return [{**document.metadata, "text": document.page_content} for document in documents]
 
-    @chain
-    def invoke_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
-        prompt_value: LanguageModelInput = inputs["prompt_value"]
-        documents: list[dict[str, str]] = inputs["documents"]
-        return llm.invoke(prompt_value, documents=documents)
+    if is_chat_model(llm):
+        if use_document_roles:
 
-    return (
-        RunnablePassthrough.assign(documents=prepare_documents).with_config(run_name="prepare_documents")
-        | RunnablePassthrough.assign(prompt_value=prompt).with_config(run_name="format_prompt")
-        | invoke_llm
-        | _output_parser
-    ).with_config(run_name="stuff_documents_chain")
+            @chain
+            def prompted_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
+                prompt_value = prompt.with_config(run_name="format_prompt").invoke(input=inputs)
+                documents: list[dict[str, Any]] = inputs["documents"]
+                document_roles: list[BaseMessage] = [ChatMessage(role=f"document {doc.get('doc_id', i)}", content=doc["text"]) for i, doc in enumerate(documents)]
+                messages = prompt_value.to_messages()
+                messages.extend(document_roles)
+                return llm.invoke(ChatPromptValue(messages=messages))
+        else:
+
+            @chain
+            def prompted_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
+                prompt_value = prompt.with_config(run_name="format_prompt").invoke(input=inputs)
+                documents: list[dict[str, Any]] = inputs["documents"]
+                return llm.invoke(prompt_value, documents=documents)
+    else:
+        prompted_llm = prompt | llm
+    return (RunnablePassthrough.assign(documents=prepare_documents).with_config(run_name="prepare_documents") | prompted_llm | _output_parser).with_config(
+        run_name="stuff_documents_chain"
+    )
