@@ -9,11 +9,10 @@ name = "ibm-granite-community-utils"
 authors = [{ name = "The IBM Granite Community Team", email = "granite.cookbooks@ibm.com" }]
 description = "A package of utility functions for IBM Granite Community notebooks."
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
