@@ -54,7 +54,7 @@ class MockLLM(BaseLLM):
             raise ValueError
         # Use client-side prompt formatting
         prompt = input.to_string()
-        result = json.dumps(dict(kwargs, prompt=prompt, messages=[repr(message) for message in input.to_messages()]))
+        result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in input.to_messages()]))
         return result
 
     async def ainvoke(  # pylint: disable=redefined-builtin
@@ -106,7 +106,7 @@ class MockChat(BaseChatModel):
             add_generation_prompt=True,
             **kwargs,
         )
-        result = json.dumps(dict(kwargs, prompt=prompt, messages=[repr(message) for message in input.to_messages()]))
+        result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in input.to_messages()]))
         return AIMessage(result)
 
     async def ainvoke(  # pylint: disable=redefined-builtin
@@ -166,7 +166,7 @@ class TestDocumentsChain:
         )
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
-        assert_that(result["messages"][0]).contains("user content")
+        assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         assert_that(result).does_not_contain("documents")
 
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
@@ -191,7 +191,7 @@ class TestDocumentsChain:
         )
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
-        assert_that(result["messages"][0]).contains("user content")
+        assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         assert_that(result).contains("documents")
         assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
         assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
@@ -225,7 +225,7 @@ class TestDocumentsChain:
         )
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
-        assert_that(result["messages"][0]).contains("user content")
+        assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         assert_that(result).contains("tools")
         assert_that(result["tools"]).is_length(1)
         assert_that(result["tools"]).extracting("type").contains_only(tools[0]["type"])
@@ -256,7 +256,7 @@ class TestDocumentsChain:
         )
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
-        assert_that(result["messages"][0]).contains("user content")
+        assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         assert_that(result).does_not_contain("documents")
 
     @pytest.mark.asyncio
@@ -282,7 +282,7 @@ class TestDocumentsChain:
         )
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
-        assert_that(result["messages"][0]).contains("user content")
+        assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         assert_that(result).contains("documents")
         assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
         assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
@@ -319,7 +319,7 @@ class TestDocumentsChain:
         )
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(len(documents) + 1 if use_document_roles else 1)
-        assert_that(result["messages"][0]).contains("user content")
+        assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         if use_document_roles:
             assert_that(result).does_not_contain("documents")
         else:
