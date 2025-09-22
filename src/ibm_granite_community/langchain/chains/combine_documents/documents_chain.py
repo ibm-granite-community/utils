@@ -69,9 +69,9 @@ def create_stuff_documents_chain(
             def prompted_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
                 prompt_value = prompt.with_config(run_name="format_prompt").invoke(input=inputs)
                 documents: list[dict[str, Any]] = inputs["documents"]
-                document_roles: list[BaseMessage] = [ChatMessage(role=f"document {doc.get('doc_id', i)}", content=doc["text"]) for i, doc in enumerate(documents)]
-                messages = prompt_value.to_messages()
-                messages.extend(document_roles)
+                messages: list[BaseMessage] = [ChatMessage(role=f"document {doc.get('doc_id', i)}", content=doc["text"]) for i, doc in enumerate(documents)]
+                original_messages = prompt_value.to_messages()
+                messages.extend(original_messages)
                 return llm.invoke(ChatPromptValue(messages=messages))
         else:
 
