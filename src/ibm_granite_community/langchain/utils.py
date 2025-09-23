@@ -5,10 +5,14 @@ LangChain support utils methods.
 """
 
 from collections import deque
+from collections.abc import Mapping, Sequence
+from typing import Any, cast
 
+from langchain_core.documents import Document
 from langchain_core.language_models import LanguageModelLike
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
+from langchain_core.messages import BaseMessage, ChatMessage
 from langchain_core.runnables import RunnableBinding, RunnableLambda, RunnableSequence
 
 
@@ -36,3 +40,33 @@ def is_chat_model(llm: LanguageModelLike, default: bool = False) -> bool:
             case _:
                 pass
     return default
+
+
+def add_document_role_messages(messages: Sequence[BaseMessage], documents: Sequence[Document] | Sequence[Mapping[str, Any]]) -> list[BaseMessage]:
+    """Add document role messages for the specified documents.
+
+    Args:
+        messages (Sequence[BaseMessage]): The initial messages
+        documents (Sequence[Document] | Sequence[Mapping[str, Any]]): The documents.
+
+    Returns:
+        list[BaseMessage]: A list including the initial messages and document role
+        messages for each of the specified documents.
+    """
+    if not documents:  # no documents
+        return list(messages)
+
+    document_messages: list[BaseMessage]
+    if isinstance(documents[0], Document):  # list[Document]
+        document_messages = [
+            ChatMessage(role=f"document {document.metadata.get('doc_id', i)}", content=document.page_content)
+            for i, document in enumerate(cast(Sequence[Document], documents), start=1)
+        ]
+    else:  # list[Mapping[str, Any]]
+        document_messages = [
+            ChatMessage(role=f"document {document.get('doc_id', i)}", content=document["text"])  #
+            for i, document in enumerate(cast(Sequence[Mapping[str, Any]], documents), start=1)
+        ]
+
+    document_messages.extend(messages)
+    return document_messages

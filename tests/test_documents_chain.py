@@ -15,7 +15,6 @@ from langchain_core.language_models.llms import BaseLLM
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, convert_to_openai_messages
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.outputs import ChatResult, LLMResult
-from langchain_core.prompt_values import PromptValue
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable, RunnableConfig, RunnableLambda
 from langchain_core.utils.function_calling import convert_to_openai_tool
@@ -23,7 +22,7 @@ from transformers import PreTrainedTokenizerBase
 
 from ibm_granite_community.langchain.chains.combine_documents import create_stuff_documents_chain
 from ibm_granite_community.langchain.prompts import TokenizerChatPromptTemplate
-from ibm_granite_community.langchain.utils import is_chat_model
+from ibm_granite_community.langchain.utils import add_document_role_messages, is_chat_model
 
 
 # Method to use as a tool
@@ -296,6 +295,8 @@ class TestDocumentsChain:
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         if use_document_roles:
             assert_that(result).does_not_contain("documents")
+            assert_that(result["messages"]).extracting("content", filter={"type": "chat"}).contains(*(document.page_content for document in documents))
+            assert_that(result["messages"]).extracting("role", filter={"type": "chat"}).contains(*(f"document {document.metadata['doc_id']}" for document in documents))
         else:
             assert_that(result).contains("documents")
             assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
@@ -318,3 +319,35 @@ class TestDocumentsChain:
         assert_that(is_chat_model(lambda_llm)).described_as(f"Lambda {description}").is_equal_to(expected)
         sequence_llm = RunnableLambda(lambda x: x) | bound_llm | JsonOutputParser()
         assert_that(is_chat_model(sequence_llm)).described_as(f"Sequence {description}").is_equal_to(expected)
+
+    def test_add_document_role_messages_lc(self, documents: list[Document]):
+        assert_that(documents).is_not_empty()
+        prompt_template = ChatPromptTemplate.from_template("user content")
+        messages = prompt_template.format_messages()
+        document_messages = add_document_role_messages(messages, documents)
+        assert_that(document_messages).is_length(len(messages) + len(documents))
+        message_dicts = [message.model_dump(exclude_none=True) for message in document_messages]
+        assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
+        assert_that(message_dicts).extracting("content", filter={"type": "chat"}).contains(*(document.page_content for document in documents))
+        assert_that(message_dicts).extracting("role", filter={"type": "chat"}).contains(*(f"document {document.metadata['doc_id']}" for document in documents))
+
+    def test_add_document_role_messages_dict(self, documents: list[Document]):
+        assert_that(documents).is_not_empty()
+        prompt_template = ChatPromptTemplate.from_template("user content")
+        messages = prompt_template.format_messages()
+        document_dicts: list[dict[str, Any]] = [{**document.metadata, "text": document.page_content} for document in documents]
+        document_messages = add_document_role_messages(messages, document_dicts)
+        assert_that(document_messages).is_length(len(messages) + len(document_dicts))
+        message_dicts = [message.model_dump(exclude_none=True) for message in document_messages]
+        assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
+        assert_that(message_dicts).extracting("content", filter={"type": "chat"}).contains(*(document["text"] for document in document_dicts))
+        assert_that(message_dicts).extracting("role", filter={"type": "chat"}).contains(*(f"document {document.metadata['doc_id']}" for document in documents))
+
+    def test_add_document_role_messages_empty(self):
+        prompt_template = ChatPromptTemplate.from_template("user content")
+        messages = prompt_template.format_messages()
+        document_messages = add_document_role_messages(messages, [])
+        assert_that(document_messages).is_length(len(messages))
+        message_dicts = [message.model_dump(exclude_none=True) for message in document_messages]
+        assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
+        assert_that(message_dicts).extracting("content", filter={"type": "chat"}).is_empty()

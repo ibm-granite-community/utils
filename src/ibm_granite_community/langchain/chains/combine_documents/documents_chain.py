@@ -13,13 +13,12 @@ from typing import Any
 
 from langchain_core.documents import Document
 from langchain_core.language_models import LanguageModelLike, LanguageModelOutput
-from langchain_core.messages import BaseMessage, ChatMessage
 from langchain_core.output_parsers import BaseOutputParser, StrOutputParser
 from langchain_core.prompt_values import ChatPromptValue, PromptValue
 from langchain_core.prompts import BasePromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, chain
 
-from ibm_granite_community.langchain.utils import is_chat_model
+from ibm_granite_community.langchain.utils import add_document_role_messages, is_chat_model
 
 PromptTemplateLike = BasePromptTemplate | Runnable[dict[str, Any], PromptValue]
 
@@ -69,17 +68,15 @@ def create_stuff_documents_chain(
             def prompted_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
                 prompt_value = prompt.with_config(run_name="format_prompt").invoke(input=inputs)
                 documents: list[dict[str, Any]] = inputs["documents"]
-                messages: list[BaseMessage] = [ChatMessage(role=f"document {doc.get('doc_id', i)}", content=doc["text"]) for i, doc in enumerate(documents)]
-                original_messages = prompt_value.to_messages()
-                messages.extend(original_messages)
-                return llm.invoke(ChatPromptValue(messages=messages))
+                messages = add_document_role_messages(prompt_value.to_messages(), documents)
+                return llm.invoke(input=ChatPromptValue(messages=messages))
         else:
 
             @chain
             def prompted_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
                 prompt_value = prompt.with_config(run_name="format_prompt").invoke(input=inputs)
                 documents: list[dict[str, Any]] = inputs["documents"]
-                return llm.invoke(prompt_value, documents=documents)
+                return llm.invoke(input=prompt_value, documents=documents)
     else:
         prompted_llm = prompt | llm
     return (RunnablePassthrough.assign(documents=prepare_documents).with_config(run_name="prepare_documents") | prompted_llm | _output_parser).with_config(
