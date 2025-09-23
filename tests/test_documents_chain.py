@@ -144,7 +144,7 @@ class MockChat(BaseChatModel):
 
 class TestDocumentsChain:
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    def test_documents_chain(self, tokenizer, document_variable_name):
+    def test_documents_chain(self, tokenizer, documents: list[Document], document_variable_name):
         assert_that(tokenizer).is_not_none()
         llm = MockLLM()
         prompt_template = TokenizerChatPromptTemplate.from_template(
@@ -152,10 +152,6 @@ class TestDocumentsChain:
             tokenizer=tokenizer,
         )
         chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser())
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
         result = chain.invoke(input={document_variable_name: documents})
         assert_that(result).contains("prompt")
         (
@@ -170,17 +166,13 @@ class TestDocumentsChain:
         assert_that(result).does_not_contain("documents")
 
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    def test_documents_chain_chat(self, tokenizer, document_variable_name):
+    def test_documents_chain_chat(self, tokenizer, documents: list[Document], document_variable_name):
         assert_that(tokenizer).is_not_none()
         llm = MockChat(tokenizer=tokenizer)
         prompt_template = ChatPromptTemplate.from_template(
             "user content",
         )
         chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser())
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
         result = chain.invoke(input={document_variable_name: documents})
         assert_that(result).contains("prompt")
         (
@@ -196,7 +188,7 @@ class TestDocumentsChain:
         assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
         assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
-    def test_documents_chain_bind(self, tokenizer):
+    def test_documents_chain_bind(self, tokenizer, documents: list[Document]):
         assert_that(tokenizer).is_not_none()
         tools = [convert_to_openai_tool(i_am_a_tool)]
         llm = MockLLM().bind(tools=tools)
@@ -211,10 +203,6 @@ class TestDocumentsChain:
             ]
         )
         chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, output_parser=JsonOutputParser())
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
         result = chain.invoke(input={"context": documents})
         assert_that(result).contains("prompt")
         (
@@ -234,7 +222,7 @@ class TestDocumentsChain:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    async def test_documents_chain_async(self, tokenizer, document_variable_name):
+    async def test_documents_chain_async(self, tokenizer, documents: list[Document], document_variable_name):
         assert_that(tokenizer).is_not_none()
         llm = MockLLM()
         prompt_template = TokenizerChatPromptTemplate.from_template(
@@ -242,10 +230,6 @@ class TestDocumentsChain:
             tokenizer=tokenizer,
         )
         chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser())
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
         result = await chain.ainvoke(input={document_variable_name: documents})
         assert_that(result).contains("prompt")
         (
@@ -261,17 +245,13 @@ class TestDocumentsChain:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    async def test_documents_chain_chat_async(self, tokenizer, document_variable_name):
+    async def test_documents_chain_chat_async(self, tokenizer, documents: list[Document], document_variable_name):
         assert_that(tokenizer).is_not_none()
         llm = MockChat(tokenizer=tokenizer)
         prompt_template = ChatPromptTemplate.from_template(
             "user content",
         )
         chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser())
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
         result = await chain.ainvoke(input={document_variable_name: documents})
         assert_that(result).contains("prompt")
         (
@@ -288,7 +268,7 @@ class TestDocumentsChain:
         assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
     @pytest.mark.parametrize("use_document_roles", [False, True])
-    def test_documents_chain_bind_chat(self, tokenizer, use_document_roles):
+    def test_documents_chain_bind_chat(self, tokenizer, documents: list[Document], use_document_roles):
         assert_that(tokenizer).is_not_none()
         tools = [convert_to_openai_tool(i_am_a_tool)]
         llm = MockChat(tokenizer=tokenizer).bind_tools(tools=tools)
@@ -298,10 +278,6 @@ class TestDocumentsChain:
             ],
         )
         chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, output_parser=JsonOutputParser(), use_document_roles=use_document_roles)
-        documents = [
-            Document(page_content="doc 49 text", metadata={"doc_id": 49}),
-            Document(page_content="doc 12 text", metadata={"doc_id": 12}),
-        ]
         result = chain.invoke(
             input={
                 "context": documents,
