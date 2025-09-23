@@ -50,11 +50,10 @@ class MockLLM(BaseLLM):
         stop: list[str] | None = None,
         **kwargs: Any,
     ) -> str:
-        if not isinstance(input, PromptValue):
-            raise ValueError
+        prompt_value = self._convert_input(input)
         # Use client-side prompt formatting
-        prompt = input.to_string()
-        result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in input.to_messages()]))
+        prompt = prompt_value.to_string()
+        result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in prompt_value.to_messages()]))
         return result
 
     async def ainvoke(  # pylint: disable=redefined-builtin
@@ -94,10 +93,9 @@ class MockChat(BaseChatModel):
         stop: list[str] | None = None,
         **kwargs: Any,
     ) -> BaseMessage:
-        if not isinstance(input, PromptValue):
-            raise ValueError
-        # Emulate server-side prompt formatting (don't call input.to_string())
-        conversation = convert_to_openai_messages(input.to_messages())
+        prompt_value = self._convert_input(input)
+        # Emulate server-side prompt formatting (don't call prompt_value.to_string())
+        conversation = convert_to_openai_messages(prompt_value.to_messages())
         if not isinstance(conversation, list):
             conversation = [conversation]
         prompt = self.tokenizer.apply_chat_template(
@@ -106,7 +104,7 @@ class MockChat(BaseChatModel):
             add_generation_prompt=True,
             **kwargs,
         )
-        result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in input.to_messages()]))
+        result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in prompt_value.to_messages()]))
         return AIMessage(result)
 
     async def ainvoke(  # pylint: disable=redefined-builtin
