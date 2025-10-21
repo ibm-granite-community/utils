@@ -91,7 +91,7 @@ class MockChat(BaseChatModel):
         *,
         stop: list[str] | None = None,
         **kwargs: Any,
-    ) -> BaseMessage:
+    ) -> AIMessage:
         prompt_value = self._convert_input(input)
         # Emulate server-side prompt formatting (don't call prompt_value.to_string())
         conversation = convert_to_openai_messages(prompt_value.to_messages())
@@ -113,7 +113,7 @@ class MockChat(BaseChatModel):
         *,
         stop: list[str] | None = None,
         **kwargs: Any,
-    ) -> BaseMessage:
+    ) -> AIMessage:
         return self.invoke(input, config, stop=stop, **kwargs)
 
     def _generate(
@@ -135,7 +135,7 @@ class MockChat(BaseChatModel):
         *,
         tool_choice: str | None = None,
         **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, BaseMessage]:
+    ) -> Runnable[LanguageModelInput, AIMessage]:
         return self.bind(tools=tools)
 
 
