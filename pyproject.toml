@@ -10,15 +10,15 @@ authors = [{ name = "The IBM Granite Community Team", email = "granite.cookbooks
 description = "A package of utility functions for IBM Granite Community notebooks."
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "python-dotenv",
@@ -130,16 +130,16 @@ commands = [
 ]
 
 [tool.tox.gh.python]
+"3.13" = ["py313-unit"]
 "3.12" = ["py312-unit"]
 "3.11" = ["py311-unit"]
-"3.10" = ["py310-unit"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 exclude = ["^src/ibm_granite_community/_version\\.py$"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 src = ["src", "tests"]
 extend-exclude = ["src/ibm_granite_community/_version.py"]
 line-length = 180
@@ -157,7 +157,7 @@ select = [
 ]
 
 [tool.pylint.main]
-py-version = "3.10"
+py-version = "3.11"
 source-roots = ["src", "tests"]
 ignore = ["_version.py"]
 
