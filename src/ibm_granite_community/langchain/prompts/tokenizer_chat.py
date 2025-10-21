@@ -12,7 +12,7 @@ model.
 import json
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
-from typing import Annotated, Any
+from typing import Annotated, Any, Self
 
 from langchain_core.messages import (
     AIMessage,
@@ -32,7 +32,7 @@ from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.prompts.string import PromptTemplateFormat
 from langchain_core.runnables import RunnableConfig
 from pydantic import Field
-from typing_extensions import Self, override
+from typing_extensions import override
 
 
 def _conversation_message(message: BaseMessage) -> Mapping[str, Any]:
