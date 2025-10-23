@@ -3,6 +3,7 @@
 # Empty array means no configuration variable is allowed.
 config-variables:
   - GRANITE_TESTING
+  - HF_HUB_DISABLE_XET
 
 # Configuration for file paths. The keys are glob patterns to match to file
 # paths relative to the repository root. The values are the configurations for

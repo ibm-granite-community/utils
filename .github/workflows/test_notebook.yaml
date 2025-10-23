@@ -231,3 +231,4 @@ jobs:
           WATSONX_URL: ${{ secrets.WATSONX_URL }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_HUB_DISABLE_XET: ${{ vars.HF_HUB_DISABLE_XET }}
