@@ -220,7 +220,7 @@ jobs:
 
       - name: Test ${{ matrix.notebook }}
         run: |
-          uv run --no-project --with-requirements "$REQUIREMENTS_TXT" -- ${{ inputs.command }}
+          uv run --isolated --with-requirements "$REQUIREMENTS_TXT" -- ${{ inputs.command }}
           uv cache prune --ci
         env:
           NOTEBOOK: ${{ matrix.notebook }}
