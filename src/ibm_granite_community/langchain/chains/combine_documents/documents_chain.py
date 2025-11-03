@@ -18,7 +18,7 @@ from langchain_core.prompt_values import ChatPromptValue, PromptValue
 from langchain_core.prompts import BasePromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, chain
 
-from ibm_granite_community.langchain.utils import add_document_role_messages, is_chat_model
+from ibm_granite_community.langchain.utils import add_document_role_messages, find_model, is_chat_model
 
 PromptTemplateLike = BasePromptTemplate | Runnable[dict[str, Any], PromptValue]
 
@@ -61,7 +61,8 @@ def create_stuff_documents_chain(
         documents: list[Document] = inputs[document_variable_name]
         return [{**document.metadata, "text": document.page_content} for document in documents]
 
-    if is_chat_model(llm):
+    model = find_model(llm)
+    if is_chat_model(model):
         if use_document_roles:
 
             @chain
@@ -76,7 +77,16 @@ def create_stuff_documents_chain(
             def prompted_llm(inputs: dict[str, Any]) -> LanguageModelOutput:
                 prompt_value = prompt.with_config(run_name="format_prompt").invoke(input=inputs)
                 documents: list[dict[str, Any]] = inputs["documents"]
-                return llm.invoke(input=prompt_value, documents=documents)
+                model_kwargs: dict[str, Any] = {"chat_template_kwargs": {"documents": documents}}
+                match type(model).__qualname__:
+                    case "ChatWatsonx":
+                        model_kwargs = {"params": model_kwargs}
+                    case _:
+                        pass
+                return llm.invoke(
+                    input=prompt_value,
+                    **model_kwargs,
+                )
     else:
         prompted_llm = prompt | llm
     return (RunnablePassthrough.assign(documents=prepare_documents).with_config(run_name="prepare_documents") | prompted_llm | _output_parser).with_config(
