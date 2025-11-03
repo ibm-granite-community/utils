@@ -6,7 +6,8 @@ import json
 from typing import Any
 
 import pytest
-from assertpy import assert_that
+from assertpy import add_extension, assert_that
+from assertpy.assertpy import AssertionBuilder
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.documents import Document
 from langchain_core.language_models import LanguageModelInput
@@ -22,7 +23,7 @@ from transformers import PreTrainedTokenizerBase
 
 from ibm_granite_community.langchain.chains.combine_documents import create_stuff_documents_chain
 from ibm_granite_community.langchain.prompts import TokenizerChatPromptTemplate
-from ibm_granite_community.langchain.utils import add_document_role_messages, is_chat_model
+from ibm_granite_community.langchain.utils import add_document_role_messages, find_model, is_chat_model
 
 
 # Method to use as a tool
@@ -97,11 +98,14 @@ class MockChat(BaseChatModel):
         conversation = convert_to_openai_messages(prompt_value.to_messages())
         if not isinstance(conversation, list):
             conversation = [conversation]
+        chat_template_kwargs = kwargs.get("chat_template_kwargs", {})
+        _chat_template_kwargs = kwargs | chat_template_kwargs
+        _chat_template_kwargs.pop("chat_template_kwargs", {})
         prompt = self.tokenizer.apply_chat_template(
             conversation,
             tokenize=False,  # output is str
             add_generation_prompt=True,
-            **kwargs,
+            **_chat_template_kwargs,
         )
         result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in prompt_value.to_messages()]))
         return AIMessage(result)
@@ -139,6 +143,33 @@ class MockChat(BaseChatModel):
         return self.bind(tools=tools)
 
 
+def extracting_chat_template_kwarg(self: AssertionBuilder, name: str) -> AssertionBuilder:
+    chat_template_kwargs = self.val.get("chat_template_kwargs", {})
+    if name in chat_template_kwargs:
+        value = chat_template_kwargs[name]
+    elif name in self.val:
+        value = self.val[name]
+    else:
+        self.error(f"Expected <{self.val}> to contain item <{name}>, but did.")
+        raise AssertionError("unreachable")
+    return self.builder(value, description=self.description, kind=self.kind, logger=self.logger)
+
+
+add_extension(extracting_chat_template_kwarg)  # type: ignore
+
+
+def does_not_contain_chat_template_kwarg(self: AssertionBuilder, name: str) -> AssertionBuilder:
+    chat_template_kwargs = self.val.get("chat_template_kwargs", {})
+    if name in chat_template_kwargs:
+        self.error(f"Expected <{chat_template_kwargs}> to not contain item <{name}>, but did.")
+    if name in self.val:
+        self.error(f"Expected <{self.val}> to not contain item <{name}>, but did.")
+    return self
+
+
+add_extension(does_not_contain_chat_template_kwarg)  # type: ignore
+
+
 class TestDocumentsChain:
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
     def test_documents_chain(self, tokenizer, documents: list[Document], document_variable_name):
@@ -160,7 +191,7 @@ class TestDocumentsChain:
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
-        assert_that(result).does_not_contain("documents")
+        assert_that(result).does_not_contain_chat_template_kwarg("documents")
 
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
     def test_documents_chain_chat(self, tokenizer, documents: list[Document], document_variable_name):
@@ -181,9 +212,9 @@ class TestDocumentsChain:
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
-        assert_that(result).contains("documents")
-        assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
-        assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
+        assert_that_documents = assert_that(result).extracting_chat_template_kwarg("documents")
+        assert_that_documents.extracting("text").contains(*(document.page_content for document in documents))
+        assert_that_documents.extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
     def test_documents_chain_bind(self, tokenizer, documents: list[Document]):
         assert_that(tokenizer).is_not_none()
@@ -211,11 +242,11 @@ class TestDocumentsChain:
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
-        assert_that(result).contains("tools")
-        assert_that(result["tools"]).is_length(1)
-        assert_that(result["tools"]).extracting("type").contains_only(tools[0]["type"])
-        assert_that(result["tools"]).extracting("function").extracting("name").contains_only(tools[0]["function"]["name"])
-        assert_that(result).does_not_contain("documents")
+        assert_that_tools = assert_that(result).extracting_chat_template_kwarg("tools")
+        assert_that_tools.is_length(1)
+        assert_that_tools.extracting("type").contains_only(tools[0]["type"])
+        assert_that_tools.extracting("function").extracting("name").contains_only(tools[0]["function"]["name"])
+        assert_that(result).does_not_contain_chat_template_kwarg("documents")
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
@@ -238,7 +269,7 @@ class TestDocumentsChain:
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
-        assert_that(result).does_not_contain("documents")
+        assert_that(result).does_not_contain_chat_template_kwarg("documents")
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
@@ -260,9 +291,9 @@ class TestDocumentsChain:
         assert_that(result).contains("messages")
         assert_that(result["messages"]).is_length(1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
-        assert_that(result).contains("documents")
-        assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
-        assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
+        assert_that_documents = assert_that(result).extracting_chat_template_kwarg("documents")
+        assert_that_documents.extracting("text").contains(*(document.page_content for document in documents))
+        assert_that_documents.extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
     @pytest.mark.parametrize("use_document_roles", [False, True])
     def test_documents_chain_bind_chat(self, tokenizer, documents: list[Document], use_document_roles):
@@ -294,17 +325,17 @@ class TestDocumentsChain:
         assert_that(result["messages"]).is_length(len(documents) + 1 if use_document_roles else 1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
         if use_document_roles:
-            assert_that(result).does_not_contain("documents")
+            assert_that(result).does_not_contain_chat_template_kwarg("documents")
             assert_that(result["messages"]).extracting("content", filter={"type": "chat"}).contains(*(document.page_content for document in documents))
             assert_that(result["messages"]).extracting("role", filter={"type": "chat"}).contains(*(f"document {document.metadata['doc_id']}" for document in documents))
         else:
-            assert_that(result).contains("documents")
-            assert_that(result["documents"]).extracting("text").contains(*(document.page_content for document in documents))
-            assert_that(result["documents"]).extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
-        assert_that(result).contains("tools")
-        assert_that(result["tools"]).is_length(1)
-        assert_that(result["tools"]).extracting("type").contains_only(tools[0]["type"])
-        assert_that(result["tools"]).extracting("function").extracting("name").contains_only(tools[0]["function"]["name"])
+            assert_that_documents = assert_that(result).extracting_chat_template_kwarg("documents")
+            assert_that_documents.extracting("text").contains(*(document.page_content for document in documents))
+            assert_that_documents.extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
+        assert_that_tools = assert_that(result).extracting_chat_template_kwarg("tools")
+        assert_that_tools.is_length(1)
+        assert_that_tools.extracting("type").contains_only(tools[0]["type"])
+        assert_that_tools.extracting("function").extracting("name").contains_only(tools[0]["function"]["name"])
 
     @pytest.mark.parametrize("llm_cls", [MockLLM, MockChat])
     def test_is_chat_model(self, tokenizer, llm_cls: type):
@@ -312,13 +343,13 @@ class TestDocumentsChain:
         llm = llm_cls(tokenizer=tokenizer)
         expected = isinstance(llm, BaseChatModel)
         description = f"{llm_cls} {'is a' if expected else 'is not a'} chat model"
-        assert_that(is_chat_model(llm)).described_as(description).is_equal_to(expected)
+        assert_that(is_chat_model(find_model(llm))).described_as(description).is_equal_to(expected)
         bound_llm = llm.bind(foo="bar")
-        assert_that(is_chat_model(bound_llm)).described_as(f"Bound {description}").is_equal_to(expected)
+        assert_that(is_chat_model(find_model(bound_llm))).described_as(f"Bound {description}").is_equal_to(expected)
         lambda_llm = RunnableLambda(lambda inputs: llm.invoke(inputs))  # pylint: disable=unnecessary-lambda
-        assert_that(is_chat_model(lambda_llm)).described_as(f"Lambda {description}").is_equal_to(expected)
+        assert_that(is_chat_model(find_model(lambda_llm))).described_as(f"Lambda {description}").is_equal_to(expected)
         sequence_llm = RunnableLambda(lambda x: x) | bound_llm | JsonOutputParser()
-        assert_that(is_chat_model(sequence_llm)).described_as(f"Sequence {description}").is_equal_to(expected)
+        assert_that(is_chat_model(find_model(sequence_llm))).described_as(f"Sequence {description}").is_equal_to(expected)
 
     def test_add_document_role_messages_lc(self, documents: list[Document]):
         assert_that(documents).is_not_empty()
