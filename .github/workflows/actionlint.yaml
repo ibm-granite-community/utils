@@ -7,13 +7,15 @@ on:
       - "main"
     paths:
       - '.github/workflows/*.ya?ml'
-      - '.github/workflows/actionlint.*' # This workflow
+      - '.github/zizmor.ya?ml'
+      - '.poutine.ya?ml'
   pull_request:
     branches:
       - "main"
     paths:
       - '.github/workflows/*.ya?ml'
-      - '.github/workflows/actionlint.*' # This workflow
+      - '.github/zizmor.ya?ml'
+      - '.poutine.ya?ml'
 
 env:
   LC_ALL: en_US.UTF-8
@@ -27,6 +29,8 @@ permissions:
 
 jobs:
   actionlint:
+    permissions:
+      security-events: write # Required for upload-sarif to upload SARIF files.
     runs-on: ubuntu-latest
     steps:
       - name: "Harden Runner"
@@ -34,19 +38,30 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            auth.docker.io:443
+            api.github.com:443
+            ghcr.io:443
             github.com:443
-            production.cloudflare.docker.com:443
-            registry-1.docker.io:443
+            pkg-containers.githubusercontent.com:443
 
       - name: "Checkout"
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - name: "Download actionlint"
-        run: |
-          docker build --tag actionlint - < .github/workflows/actionlint.dockerfile
+      - name: "Check workflow files with zizmor"
+        uses: zizmorcore/zizmor-action@71321a20a9ded102f6e9ce5718a2fcec2c4f70d8 # v0.5.2
+        with:
+          inputs: > # zizmor fails to parse test_notebook.yaml
+            .github/workflows/actionlint.yaml
+            .github/workflows/unit-testing.yaml
 
-      - name: "Check workflow files"
-        run: |
-          echo "::add-matcher::.github/workflows/matchers/actionlint.json"
-          docker run --volume="${{ github.workspace }}:/repo" --workdir=/repo actionlint -color
+      - name: "Check workflow files with poutine"
+        uses: boostsecurityio/poutine-action@84c0a0d32e8d57ae12651222be1eb15351429228 # v0.15.2
+        with:
+          output: ${{ runner.temp }}/poutine.sarif
+
+      - name: "Upload poutine SARIF file"
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
+        with:
+          sarif_file: ${{ runner.temp }}/poutine.sarif
+          category: poutine

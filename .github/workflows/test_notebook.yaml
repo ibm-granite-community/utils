@@ -81,6 +81,7 @@ on:
 env:
   LC_ALL: en_US.UTF-8
   UV_NO_PROGRESS: 'true'
+  UV_EXCLUDE_NEWER: '1 week' # dependency cooldown
 
 defaults:
   run:
@@ -110,6 +111,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ inputs.ref }}
 
       - name: Find all notebook files
@@ -164,6 +166,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ inputs.ref }}
 
       - name: Prepare Additional Test Setup action

@@ -174,3 +174,6 @@ disable = [
 [tool.pylint.reports]
 reports = true
 score = true
+
+[tool.uv]
+exclude-newer = "1 week"
