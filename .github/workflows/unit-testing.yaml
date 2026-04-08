@@ -9,17 +9,19 @@ on:
     paths:
       - '**/*.py'
       - 'pyproject.toml'
-      - '.github/workflows/unit-testing.yaml' # This workflow
+      - '.github/workflows/unit-testing.ya?ml' # This workflow
   pull_request:
     branches:
       - main
     paths:
       - '**/*.py'
       - 'pyproject.toml'
-      - '.github/workflows/unit-testing.yaml' # This workflow
+      - '.github/workflows/unit-testing.ya?ml' # This workflow
 
 env:
   LC_ALL: en_US.UTF-8
+  UV_NO_PROGRESS: 'true'
+  UV_EXCLUDE_NEWER: '1 week' # dependency cooldown
 
 defaults:
   run:
@@ -47,6 +49,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: 'Setup Python ${{ matrix.python }}'
         id: python
@@ -94,6 +98,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: 'Setup Python ${{ matrix.python }}'
         id: python
