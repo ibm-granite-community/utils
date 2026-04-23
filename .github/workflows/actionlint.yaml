@@ -56,7 +56,7 @@ jobs:
             .github/workflows/unit-testing.yaml
 
       - name: "Check workflow files with poutine"
-        uses: boostsecurityio/poutine-action@84c0a0d32e8d57ae12651222be1eb15351429228 # v0.15.2
+        uses: boostsecurityio/poutine-action@2bf7189397972f9eeb71ada7bd1f45b543f9e304 # v1.1.3
         with:
           output: ${{ runner.temp }}/poutine.sarif
 
