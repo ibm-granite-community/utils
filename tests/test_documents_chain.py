@@ -3,6 +3,7 @@
 # create_stuff_documents_chain tests
 
 import json
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import pytest
@@ -18,8 +19,10 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.outputs import ChatResult, LLMResult
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable, RunnableConfig, RunnableLambda
+from langchain_core.tools import BaseTool
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from transformers import PreTrainedTokenizerBase
+from typing_extensions import override
 
 from ibm_granite_community.langchain.chains.combine_documents import create_stuff_documents_chain
 from ibm_granite_community.langchain.prompts import TokenizerChatPromptTemplate
@@ -42,7 +45,8 @@ def i_am_a_tool(tool_arg: str) -> str:
 class MockLLM(BaseLLM):
     """Mock llm which returns the formatted prompt, messages and kwargs in its output"""
 
-    def invoke(  # pylint: disable=redefined-builtin
+    @override
+    def invoke(
         self,
         input: LanguageModelInput,
         config: RunnableConfig | None = None,
@@ -56,7 +60,8 @@ class MockLLM(BaseLLM):
         result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in prompt_value.to_messages()]))
         return result
 
-    async def ainvoke(  # pylint: disable=redefined-builtin
+    @override
+    async def ainvoke(
         self,
         input: LanguageModelInput,
         config: RunnableConfig | None = None,
@@ -66,6 +71,7 @@ class MockLLM(BaseLLM):
     ) -> str:
         return self.invoke(input, config, stop=stop, **kwargs)
 
+    @override
     def _generate(
         self,
         prompts: list[str],
@@ -75,6 +81,7 @@ class MockLLM(BaseLLM):
     ) -> LLMResult:
         raise NotImplementedError()
 
+    @override
     @property
     def _llm_type(self) -> str:
         return "test"
@@ -85,7 +92,8 @@ class MockChat(BaseChatModel):
 
     tokenizer: PreTrainedTokenizerBase
 
-    def invoke(  # pylint: disable=redefined-builtin
+    @override
+    def invoke(
         self,
         input: LanguageModelInput,
         config: RunnableConfig | None = None,
@@ -95,7 +103,7 @@ class MockChat(BaseChatModel):
     ) -> AIMessage:
         prompt_value = self._convert_input(input)
         # Emulate server-side prompt formatting (don't call prompt_value.to_string())
-        conversation = convert_to_openai_messages(prompt_value.to_messages())
+        conversation: list[dict[str, Any]] | dict[str, Any] = convert_to_openai_messages(prompt_value.to_messages())
         if not isinstance(conversation, list):
             conversation = [conversation]
         chat_template_kwargs = kwargs.get("chat_template_kwargs", {})
@@ -110,7 +118,8 @@ class MockChat(BaseChatModel):
         result = json.dumps(dict(kwargs, prompt=prompt, messages=[message.model_dump(exclude_none=True) for message in prompt_value.to_messages()]))
         return AIMessage(result)
 
-    async def ainvoke(  # pylint: disable=redefined-builtin
+    @override
+    async def ainvoke(
         self,
         input: LanguageModelInput,
         config: RunnableConfig | None = None,
@@ -120,6 +129,7 @@ class MockChat(BaseChatModel):
     ) -> AIMessage:
         return self.invoke(input, config, stop=stop, **kwargs)
 
+    @override
     def _generate(
         self,
         messages: list[BaseMessage],
@@ -129,13 +139,15 @@ class MockChat(BaseChatModel):
     ) -> ChatResult:
         raise NotImplementedError()
 
+    @override
     @property
     def _llm_type(self) -> str:
         return "test"
 
+    @override
     def bind_tools(
         self,
-        tools: list[dict[str, Any]],  # type: ignore[override]
+        tools: Sequence[dict[str, Any] | type | Callable[..., Any] | BaseTool],
         *,
         tool_choice: str | None = None,
         **kwargs: Any,
@@ -155,7 +167,7 @@ def extracting_chat_template_kwarg(self: AssertionBuilder, name: str) -> Asserti
     return self.builder(value, description=self.description, kind=self.kind, logger=self.logger)
 
 
-add_extension(extracting_chat_template_kwarg)  # type: ignore
+add_extension(extracting_chat_template_kwarg)
 
 
 def does_not_contain_chat_template_kwarg(self: AssertionBuilder, name: str) -> AssertionBuilder:
@@ -167,12 +179,12 @@ def does_not_contain_chat_template_kwarg(self: AssertionBuilder, name: str) -> A
     return self
 
 
-add_extension(does_not_contain_chat_template_kwarg)  # type: ignore
+add_extension(does_not_contain_chat_template_kwarg)
 
 
 class TestDocumentsChain:
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    def test_documents_chain(self, tokenizer, documents: list[Document], document_variable_name):
+    def test_documents_chain(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], document_variable_name: str):
         assert_that(tokenizer).is_not_none()
         llm = MockLLM()
         prompt_template = TokenizerChatPromptTemplate.from_template(
@@ -194,7 +206,7 @@ class TestDocumentsChain:
         assert_that(result).does_not_contain_chat_template_kwarg("documents")
 
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    def test_documents_chain_chat(self, tokenizer, documents: list[Document], document_variable_name):
+    def test_documents_chain_chat(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], document_variable_name: str):
         assert_that(tokenizer).is_not_none()
         llm = MockChat(tokenizer=tokenizer)
         prompt_template = ChatPromptTemplate.from_template(
@@ -216,7 +228,7 @@ class TestDocumentsChain:
         assert_that_documents.extracting("text").contains(*(document.page_content for document in documents))
         assert_that_documents.extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
-    def test_documents_chain_bind(self, tokenizer, documents: list[Document]):
+    def test_documents_chain_bind(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document]):
         assert_that(tokenizer).is_not_none()
         tools = [convert_to_openai_tool(i_am_a_tool)]
         llm = MockLLM().bind(tools=tools)
@@ -250,7 +262,7 @@ class TestDocumentsChain:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    async def test_documents_chain_async(self, tokenizer, documents: list[Document], document_variable_name):
+    async def test_documents_chain_async(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], document_variable_name: str):
         assert_that(tokenizer).is_not_none()
         llm = MockLLM()
         prompt_template = TokenizerChatPromptTemplate.from_template(
@@ -273,7 +285,7 @@ class TestDocumentsChain:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("document_variable_name", ["context", "custom_name"])
-    async def test_documents_chain_chat_async(self, tokenizer, documents: list[Document], document_variable_name):
+    async def test_documents_chain_chat_async(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], document_variable_name: str):
         assert_that(tokenizer).is_not_none()
         llm = MockChat(tokenizer=tokenizer)
         prompt_template = ChatPromptTemplate.from_template(
@@ -296,7 +308,7 @@ class TestDocumentsChain:
         assert_that_documents.extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
     @pytest.mark.parametrize("use_document_roles", [False, True])
-    def test_documents_chain_bind_chat(self, tokenizer, documents: list[Document], use_document_roles):
+    def test_documents_chain_bind_chat(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], use_document_roles: bool):
         assert_that(tokenizer).is_not_none()
         tools = [convert_to_openai_tool(i_am_a_tool)]
         llm = MockChat(tokenizer=tokenizer).bind_tools(tools=tools)
@@ -338,7 +350,7 @@ class TestDocumentsChain:
         assert_that_tools.extracting("function").extracting("name").contains_only(tools[0]["function"]["name"])
 
     @pytest.mark.parametrize("llm_cls", [MockLLM, MockChat])
-    def test_is_chat_model(self, tokenizer, llm_cls: type):
+    def test_is_chat_model(self, tokenizer: PreTrainedTokenizerBase, llm_cls: type):
         assert_that(tokenizer).is_not_none()
         llm = llm_cls(tokenizer=tokenizer)
         expected = isinstance(llm, BaseChatModel)
@@ -346,7 +358,7 @@ class TestDocumentsChain:
         assert_that(is_chat_model(find_model(llm))).described_as(description).is_equal_to(expected)
         bound_llm = llm.bind(foo="bar")
         assert_that(is_chat_model(find_model(bound_llm))).described_as(f"Bound {description}").is_equal_to(expected)
-        lambda_llm = RunnableLambda(lambda inputs: llm.invoke(inputs))  # pylint: disable=unnecessary-lambda
+        lambda_llm = RunnableLambda(lambda inputs: llm.invoke(inputs))
         assert_that(is_chat_model(find_model(lambda_llm))).described_as(f"Lambda {description}").is_equal_to(expected)
         sequence_llm = RunnableLambda(lambda x: x) | bound_llm | JsonOutputParser()
         assert_that(is_chat_model(find_model(sequence_llm))).described_as(f"Sequence {description}").is_equal_to(expected)

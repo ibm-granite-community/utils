@@ -16,7 +16,7 @@ from langchain_core.messages import BaseMessage, ChatMessage
 from langchain_core.runnables import RunnableBinding, RunnableLambda, RunnableSequence
 
 
-def find_model(candidate: LanguageModelLike) -> BaseLanguageModel | None:
+def find_model(candidate: LanguageModelLike) -> BaseLanguageModel[Any] | None:
     """
     This method will attempt to discern the base language model.
     If a determination cannot be made, it returns None.
@@ -39,7 +39,7 @@ def find_model(candidate: LanguageModelLike) -> BaseLanguageModel | None:
     return None
 
 
-def is_chat_model(llm: BaseLanguageModel | None, default: bool = False) -> bool:
+def is_chat_model(llm: BaseLanguageModel[Any] | None, default: bool = False) -> bool:
     """
     This method will attempt to discern if the input is a chat model
     (extends BaseChatModel class) or a completion model (extends BaseLLM class).

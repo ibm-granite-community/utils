@@ -47,11 +47,7 @@ def _conversation_message(message: BaseMessage) -> Mapping[str, Any]:
     Returns:
         Mapping[str, Any]: The conversation element.
     """
-    conversation_message: dict[str, Any] = {
-        key: getattr(message, key)
-        for key in message.model_fields_set
-        if key not in BaseMessage.model_fields  # pylint: disable=unsupported-membership-test
-    }
+    conversation_message: dict[str, Any] = {key: getattr(message, key) for key in message.model_fields_set if key not in BaseMessage.model_fields}
 
     if isinstance(message, HumanMessage):
         role = "user"
@@ -101,6 +97,7 @@ class TokenizerChatPromptValue(ChatPromptValue):
         conversation = [_conversation_message(message) for message in self.messages]
         return self.apply_chat_template(conversation)
 
+    @override
     @classmethod
     def is_lc_serializable(cls) -> bool:
         """This class is not serializable."""
@@ -146,15 +143,16 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
             **kwargs,
         )
 
+    @override
     @classmethod
     def is_lc_serializable(cls) -> bool:
         """This class is not serializable."""
         return False
 
+    @override
     @classmethod
-    def from_template(  # type: ignore[override] # pylint: disable=arguments-differ
-        cls, template: str, *, tokenizer: Any, **kwargs: Any
-    ) -> Self:
+    # pyrefly: ignore [bad-override]
+    def from_template(cls, template: str, *, tokenizer: Any, **kwargs: Any) -> Self:
         """Create a chat prompt template from a template string.
 
         Creates a chat template consisting of a single message assumed to be from
@@ -173,8 +171,10 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
         message = HumanMessagePromptTemplate(prompt=prompt_template)
         return cls.from_messages(messages=[message], tokenizer=tokenizer)
 
+    @override
     @classmethod
-    def from_messages(  # type: ignore[override] # pylint: disable=arguments-differ
+    # pyrefly: ignore [bad-override]
+    def from_messages(
         cls,
         messages: Sequence[MessageLikeRepresentation],
         template_format: PromptTemplateFormat = "f-string",
@@ -238,7 +238,7 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
         return TokenizerChatPromptValue(apply_chat_template=apply_chat_template, messages=messages)
 
     @override
-    def format_prompt(self, **kwargs: Any) -> PromptValue:  # type: ignore[override]
+    def format_prompt(self, **kwargs: Any) -> ChatPromptValue:
         """Format prompt.
             Should return a PromptValue.
 
@@ -254,7 +254,7 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
         return self._prompt_value(messages, **kwargs)
 
     @override
-    async def aformat_prompt(self, **kwargs: Any) -> PromptValue:  # type: ignore[override]
+    async def aformat_prompt(self, **kwargs: Any) -> ChatPromptValue:
         """Async format prompt.
             Should return a PromptValue.
 
@@ -272,7 +272,7 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
     @override
     def invoke(
         self,
-        input: dict,  # pylint: disable=redefined-builtin
+        input: dict[str, Any],
         config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> PromptValue:
@@ -293,7 +293,7 @@ class TokenizerChatPromptTemplate(ChatPromptTemplate):
     @override
     async def ainvoke(
         self,
-        input: dict,  # pylint: disable=redefined-builtin
+        input: dict[str, Any],
         config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> PromptValue:

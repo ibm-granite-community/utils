@@ -9,6 +9,7 @@ import pytest
 from assertpy import assert_that
 from langchain_core.messages import AIMessage, ChatMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.prompts import MessagesPlaceholder
+from transformers import PreTrainedTokenizerBase
 
 from ibm_granite_community.langchain.prompts import TokenizerChatPromptTemplate
 
@@ -28,7 +29,7 @@ def i_am_a_tool(tool_arg: str) -> str:
 
 class TestTokenizerChatTemplate:
     # Test simple from_template prompt
-    def test_from_template(self, tokenizer):
+    def test_from_template(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_template("What's the weather like in Bengaluru?", tokenizer=tokenizer)
         text = prompt_template.invoke(input={}).to_string()
@@ -39,7 +40,7 @@ class TestTokenizerChatTemplate:
         )
 
     @pytest.mark.asyncio
-    async def test_from_template_async(self, tokenizer):
+    async def test_from_template_async(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_template("What's the weather like in Bengaluru?", tokenizer=tokenizer)
         text = (await prompt_template.ainvoke(input={})).to_string()
@@ -49,7 +50,7 @@ class TestTokenizerChatTemplate:
             .ends_with("<|start_of_role|>assistant<|end_of_role|>")
         )
 
-    def test_from_messages(self, tokenizer):
+    def test_from_messages(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_messages(
             [
@@ -71,7 +72,7 @@ class TestTokenizerChatTemplate:
         )
 
     @pytest.mark.asyncio
-    async def test_from_messages_async(self, tokenizer):
+    async def test_from_messages_async(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_messages(
             [
@@ -92,7 +93,7 @@ class TestTokenizerChatTemplate:
             .ends_with("<|start_of_role|>assistant<|end_of_role|>")
         )
 
-    def test_bind(self, tokenizer):
+    def test_bind(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_messages(
             [
@@ -140,7 +141,7 @@ class TestTokenizerChatTemplate:
             assert_that(parsed).contains_entry({"name": "tool1"}).contains_key("arguments")
 
     @pytest.mark.asyncio
-    async def test_bind_async(self, tokenizer):
+    async def test_bind_async(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_messages(
             [
@@ -189,7 +190,7 @@ class TestTokenizerChatTemplate:
             parsed = json.loads(tool.strip())
             assert_that(parsed).contains_entry({"name": "tool1"}).contains_key("arguments")
 
-    def test_documents(self, tokenizer):
+    def test_documents(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_template(
             "user content",
@@ -212,7 +213,7 @@ class TestTokenizerChatTemplate:
         )
 
     @pytest.mark.asyncio
-    async def test_documents_async(self, tokenizer):
+    async def test_documents_async(self, tokenizer: PreTrainedTokenizerBase):
         assert_that(tokenizer).is_not_none()
         prompt_template = TokenizerChatPromptTemplate.from_template(
             "user content",
