@@ -20,14 +20,14 @@ from langchain_core.runnables import Runnable, RunnablePassthrough, chain
 
 from ibm_granite_community.langchain.utils import add_document_role_messages, find_model, is_chat_model
 
-PromptTemplateLike = BasePromptTemplate | Runnable[dict[str, Any], PromptValue]
+PromptTemplateLike = BasePromptTemplate[Any] | Runnable[dict[str, Any], PromptValue]
 
 
 def create_stuff_documents_chain(
     llm: LanguageModelLike,
     prompt: PromptTemplateLike,
     *,
-    output_parser: BaseOutputParser | None = None,
+    output_parser: BaseOutputParser[Any] | None = None,
     document_variable_name: str = "context",
     use_document_roles: bool = False,
 ) -> Runnable[dict[str, Any], Any]:

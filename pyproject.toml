@@ -44,16 +44,12 @@ test = [
 pytest = [
     {include-group = "test"},
 ]
-pylint = [
-    "pylint",
-    {include-group = "test"},
-]
 ruff = [
     "ruff",
     {include-group = "test"},
 ]
-mypy = [
-    "mypy",
+pyrefly = [
+    "pyrefly",
     {include-group = "test"},
 ]
 
@@ -66,12 +62,11 @@ local_scheme = "no-local-version"                   # do not include +gREV local
 # py311-unit runs the same tests with 'python3.11'
 env_list = [
     "ruff",
-    "pylint",
-    "mypy",
+    "pyrefly",
     "py3-unit",
 ]
 requires = ["tox>=4.22"]
-labels = { lint = ["ruff", "pylint", "mypy"] }
+labels = { lint = ["ruff", "pyrefly"] }
 
 [tool.tox.env_run_base]
 description = "Run tests with pytest"
@@ -85,15 +80,6 @@ commands = [
     ["{envpython}", "-m", "pytest", { replace = "posargs", default = ["tests"], extend = true }],
 ]
 
-[tool.tox.env.pylint]
-description = "Lint with pylint"
-dependency_groups = [
-    "pylint",
-]
-commands = [
-    ["{envpython}", "-m", "pylint", { replace = "posargs", default = ["src", "tests"], extend = true }],
-]
-
 [tool.tox.env.ruff]
 description = "Reformat and fix code with Ruff"
 skip_install = true
@@ -102,8 +88,8 @@ dependency_groups = [
     "ruff",
 ]
 commands = [
-    ["ruff", "check", "--fix"],
-    ["ruff", "format"],
+    ["{envpython}", "-m", "ruff", "check", "--fix", { replace = "if", condition = "env.GITHUB_ACTIONS == 'true'", then = ["--output-format=github"], extend = true }],
+    ["{envpython}", "-m", "ruff", "format"],
 ]
 
 [tool.tox.env.ruffcheck]
@@ -114,19 +100,17 @@ dependency_groups = [
     "ruff",
 ]
 commands = [
-    ["ruff", "check", "--diff"],
-    ["ruff", "format", "--check"],
+    ["{envpython}", "-m", "ruff", "check", "--diff", { replace = "if", condition = "env.GITHUB_ACTIONS == 'true'", then = ["--output-format=github"], extend = true }],
+    ["{envpython}", "-m", "ruff", "format", "--check"],
 ]
 
-[tool.tox.env.mypy]
-description = "Python type checking with mypy"
-namespace_packages = true
-explicit_package_bases = true
+[tool.tox.env.pyrefly]
+description = "Python type checking with pyrefly"
 dependency_groups = [
-    "mypy",
+    "pyrefly",
 ]
 commands = [
-    ["{envpython}", "-m", "mypy", { replace = "posargs", default = ["src", "tests"], extend = true }],
+    ["{envpython}", "-m", "pyrefly", { replace = "posargs", default = ["check"], extend = true }, { replace = "if", condition = "env.GITHUB_ACTIONS == 'true'", then = ["--output-format=github"], extend = true }],
 ]
 
 [tool.tox.gh.python]
@@ -134,9 +118,11 @@ commands = [
 "3.12" = ["py312-unit"]
 "3.11" = ["py311-unit"]
 
-[tool.mypy]
-python_version = "3.11"
-exclude = ["^src/ibm_granite_community/_version\\.py$"]
+[tool.pyrefly]
+project-includes = ["src", "tests"]
+project-excludes = ["**/src/ibm_granite_community/_version.py"]
+python-version = "3.11"
+preset = "strict"
 
 [tool.ruff]
 target-version = "py311"
@@ -155,25 +141,6 @@ select = [
     "SIM", # flake8-simplify
     "TID", # flake8-tidy-imports
 ]
-
-[tool.pylint.main]
-py-version = "3.11"
-source-roots = ["src", "tests"]
-ignore = ["_version.py"]
-
-[tool.pylint.design]
-max-line-length = 180
-
-[tool.pylint."messages control"]
-disable = [
-    "missing-class-docstring",
-    "missing-module-docstring",
-    "missing-function-docstring",
-]
-
-[tool.pylint.reports]
-reports = true
-score = true
 
 [tool.uv]
 exclude-newer = "1 week"

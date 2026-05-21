@@ -12,7 +12,7 @@ from ibm_granite_community.notebook_utils import escape_f_string, get_env_var, s
 
 
 # Test retrieval of new environment variable
-def test_env_var_set(monkeypatch):
+def test_env_var_set(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("TEST_VAR", "bartholomew")
 
     assert_that(get_env_var("TEST_VAR")).is_equal_to("bartholomew")
@@ -24,7 +24,7 @@ def test_env_var_preset():
 
 
 # Test acquisition of environment variable using getpass
-def test_env_var_getpass(monkeypatch):
+def test_env_var_getpass(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(getpass, "getpass", lambda prompt: "abc123")
 
     assert_that(get_env_var("APIKEY")).is_equal_to("abc123")

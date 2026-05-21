@@ -36,7 +36,6 @@ def get_env_var(var_name: str, default_value: str | None = None) -> str:
     Returns:
         str: The environment variable value.
     """
-    # pylint: disable=import-outside-toplevel
     env_var: str | None = os.environ.get(var_name)
 
     if env_var is not None:
@@ -44,8 +43,8 @@ def get_env_var(var_name: str, default_value: str | None = None) -> str:
 
     if is_colab():
         # If in Google Colab, try to get the API key from a secret
-        # pylint: disable=import-error
-        from google.colab import userdata  # type: ignore[import-not-found]
+        # pyrefly: ignore [missing-import]
+        from google.colab import userdata
 
         try:
             env_var = userdata.get(var_name)
