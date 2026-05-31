@@ -21,7 +21,6 @@ on:
 env:
   LC_ALL: en_US.UTF-8
   UV_NO_PROGRESS: 'true'
-  UV_EXCLUDE_NEWER: '1 week' # dependency cooldown
 
 defaults:
   run:
@@ -46,7 +45,17 @@ jobs:
       - name: "Harden Runner"
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            huggingface.co:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -54,20 +63,13 @@ jobs:
           persist-credentials: false
 
       - name: 'Setup Python ${{ matrix.python }}'
-        id: python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: ./.github/actions/python_setup
         with:
           python-version: ${{ matrix.python }}
 
-      - name: 'Setup uv'
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          python-version: ${{ steps.python.outputs.python-version }}
-          enable-cache: false
-
       - name: Unit tests
         run: |
-          uvx --with tox-uv --with tox-gh -- tox
+          uv run pytest tests
 
   lint:
     name: "${{ matrix.lint.name }}"
@@ -82,15 +84,25 @@ jobs:
         lint:
           - name: 'ruff'
             commands: |
-              uvx --with tox-uv -- tox -e ruffcheck
+              uv run ruff check --diff --output-format=github
+              uv run ruff format --check
           - name: 'pyrefly'
             commands: |
-              uvx --with tox-uv -- tox -e pyrefly
+              uv run pyrefly check --output-format=github
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -98,16 +110,10 @@ jobs:
           persist-credentials: false
 
       - name: 'Setup Python ${{ matrix.python }}'
-        id: python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: ./.github/actions/python_setup
         with:
           python-version: ${{ matrix.python }}
-
-      - name: 'Setup uv'
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          python-version: ${{ steps.python.outputs.python-version }}
-          enable-cache: false
+          save-cache: false
 
       - name: "${{ matrix.lint.name }}"
         run: |

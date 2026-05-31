@@ -7,14 +7,30 @@ updates:
   - package-ecosystem: "github-actions"
     directories:
     - "/"
+    - "/.github/actions"
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
-  - package-ecosystem: "docker"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "github_actions"
+  # Maintain dependencies for python
+  - package-ecosystem: "pip"
     directories:
-    - "/.github/workflows"
+    - "/"
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "python"
