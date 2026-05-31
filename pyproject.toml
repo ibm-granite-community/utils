@@ -20,103 +20,41 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
+keywords = ["granite", "ibm", "ai", "llm", "langchain", "rag", "notebooks"]
 dependencies = [
-    "python-dotenv",
-    "langchain_core",
-    "typing_extensions",
+    "python_dotenv>=1.0.0",
+    "langchain_core>=1.0.0",
+    "typing_extensions>=4.0.0",
 ]
 dynamic = ["version"]
 
 [project.urls]
-homepage = "https://github.com/ibm-granite-community"
+homepage = "https://github.com/ibm-granite-community/utils"
+documentation = "https://github.com/ibm-granite-community/utils#readme"
 source = "https://github.com/ibm-granite-community/utils"
 issues = "https://github.com/ibm-granite-community/utils/issues"
 
+[project.optional-dependencies]
+tokenizer_chat = ["transformers>=4.40.0"]
+
 [dependency-groups]
-test = [
-    "pytest",
-    "pytest_asyncio",
-    "assertpy",
-    "types-assertpy",
-    "transformers",
-    "jinja2",
+dev = [
+    "pytest>=8.0.0",
+    "pytest_asyncio>=0.23.0",
+    "assertpy>=1.1",
+    "types_assertpy>=1.1.0",
+    "transformers>=4.40.0",
+    "jinja2>=3.1.0",
+    "ruff>=0.4.0",
+    "pyrefly>=0.1.0",
 ]
-pytest = [
-    {include-group = "test"},
-]
-ruff = [
-    "ruff",
-    {include-group = "test"},
-]
-pyrefly = [
-    "pyrefly",
-    {include-group = "test"},
-]
+
+[tool.uv]
+exclude-newer = "1 week" # cool down period for new versions
 
 [tool.setuptools_scm]
 version_file = "src/ibm_granite_community/_version.py"
 local_scheme = "no-local-version"                   # do not include +gREV local version, required for Test PyPI upload
-
-[tool.tox]
-# py3-unit runs unit tests with 'python3'
-# py311-unit runs the same tests with 'python3.11'
-env_list = [
-    "ruff",
-    "pyrefly",
-    "py3-unit",
-]
-requires = ["tox>=4.22"]
-labels = { lint = ["ruff", "pyrefly"] }
-
-[tool.tox.env_run_base]
-description = "Run tests with pytest"
-package = "wheel"
-wheel_build_env = "pkg"
-setenv = { REPLICATE_API_TOKEN = "testing" }
-dependency_groups = [
-    "pytest",
-]
-commands = [
-    ["{envpython}", "-m", "pytest", { replace = "posargs", default = ["tests"], extend = true }],
-]
-
-[tool.tox.env.ruff]
-description = "Reformat and fix code with Ruff"
-skip_install = true
-skip_sdist = true
-dependency_groups = [
-    "ruff",
-]
-commands = [
-    ["{envpython}", "-m", "ruff", "check", "--fix", { replace = "if", condition = "env.GITHUB_ACTIONS == 'true'", then = ["--output-format=github"], extend = true }],
-    ["{envpython}", "-m", "ruff", "format"],
-]
-
-[tool.tox.env.ruffcheck]
-description = "Check code with Ruff"
-skip_install = true
-skip_sdist = true
-dependency_groups = [
-    "ruff",
-]
-commands = [
-    ["{envpython}", "-m", "ruff", "check", "--diff", { replace = "if", condition = "env.GITHUB_ACTIONS == 'true'", then = ["--output-format=github"], extend = true }],
-    ["{envpython}", "-m", "ruff", "format", "--check"],
-]
-
-[tool.tox.env.pyrefly]
-description = "Python type checking with pyrefly"
-dependency_groups = [
-    "pyrefly",
-]
-commands = [
-    ["{envpython}", "-m", "pyrefly", { replace = "posargs", default = ["check"], extend = true }, { replace = "if", condition = "env.GITHUB_ACTIONS == 'true'", then = ["--output-format=github"], extend = true }],
-]
-
-[tool.tox.gh.python]
-"3.13" = ["py313-unit"]
-"3.12" = ["py312-unit"]
-"3.11" = ["py311-unit"]
 
 [tool.pyrefly]
 project-includes = ["src", "tests"]
@@ -134,13 +72,12 @@ line-length = 180
 select = [
     "B",   # flake8-bugbear
     "E",   # pycodestyle
+    "W",   # pycodestyle warnings
     "F",   # Pyflakes
     "Q",   # flake8-quotes
     "I",   # isort
     "UP",  # pyupgrade
     "SIM", # flake8-simplify
     "TID", # flake8-tidy-imports
+    "N",   # pep8-naming
 ]
-
-[tool.uv]
-exclude-newer = "1 week"
