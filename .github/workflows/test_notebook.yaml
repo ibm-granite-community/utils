@@ -161,7 +161,7 @@ jobs:
       - name: Free Disk Space
         if: ${{ inputs.free-disk-space }}
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
-        with: ${{ fromJSON(startsWith(inputs.free-disk-space, '{') && inputs.free-disk-space || '{}') }}
+        with: ${{ fromJSON(startsWith(inputs.free-disk-space, '{') && inputs.free-disk-space || '{}') }}  # zizmor: ignore[obfuscation]
 
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -222,7 +222,7 @@ jobs:
           NOTEBOOK: ${{ matrix.notebook }}
 
       - name: Test ${{ matrix.notebook }}
-        run: |
+        run: | # zizmor: ignore[template-injection]
           uv run --isolated --with-requirements "$REQUIREMENTS_TXT" -- ${{ inputs.command }}
           uv cache prune --ci
         env:
