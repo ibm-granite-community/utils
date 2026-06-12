@@ -105,7 +105,8 @@ model = find_model(your_chain)
 if is_chat_model(model):
     print("This is a chat model")
 
-# Add document role messages for RAG applications
+# Add document role messages for RAG applications when using Ollama which does not
+# support passing documents in chat_template_kwargs
 from langchain_core.messages import HumanMessage
 from langchain_core.documents import Document
 
