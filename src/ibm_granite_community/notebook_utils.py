@@ -16,6 +16,69 @@ def is_colab() -> bool:
         return False
 
 
+def _get_from_colab(var_name: str) -> str | None:
+    """Try to get variable from Google Colab secrets.
+
+    Args:
+        var_name (str): The environment variable name
+
+    Returns:
+        str | None: The variable value if found, None otherwise
+    """
+    if not is_colab():
+        return None
+
+    # pyrefly: ignore [missing-import]
+    from google.colab import userdata
+
+    try:
+        env_var = userdata.get(var_name)
+        if env_var:
+            print(f"{var_name} loaded from Google Colab secret.")
+            return env_var
+    except userdata.SecretNotFoundError:
+        print(f"{var_name} not found in Google Colab secrets.")
+
+    return None
+
+
+def _get_from_dotenv(var_name: str) -> str | None:
+    """Try to get variable from .env file.
+
+    Args:
+        var_name (str): The environment variable name
+
+    Returns:
+        str | None: The variable value if found, None otherwise
+    """
+    dotenv_path = find_dotenv(usecwd=True)  # .env can be in a parent folder
+    if not dotenv_path:
+        return None
+
+    load_dotenv(dotenv_path=dotenv_path)
+    env_var = os.environ.get(var_name)
+    if env_var:
+        print(f"{var_name} loaded from .env file.")
+        return env_var
+
+    print(f"{var_name} not found in .env file.")
+    return None
+
+
+def _get_from_user(var_name: str) -> str:
+    """Prompt user for variable value using getpass.
+
+    Args:
+        var_name (str): The environment variable name
+
+    Returns:
+        str: The value entered by the user (may be empty string)
+    """
+    from getpass import getpass
+
+    return getpass(f"Please enter your {var_name}: ")
+
+
 # Function to get the API key
 def get_env_var(var_name: str, default_value: str | None = None) -> str:
     """Return the value of the environment variable.
@@ -25,6 +88,13 @@ def get_env_var(var_name: str, default_value: str | None = None) -> str:
     Otherwise call getpass to ask the user for a value.
 
     If a value was found in any of the search locations, the value is stored in os.environ.
+
+    Search order:
+    1. Already set in os.environ
+    2. Google Colab secrets (if in Colab)
+    3. .env file
+    4. Default value (if provided)
+    5. User prompt via getpass
 
     Args:
         var_name (str): The environment variable name
@@ -36,50 +106,31 @@ def get_env_var(var_name: str, default_value: str | None = None) -> str:
     Returns:
         str: The environment variable value.
     """
-    env_var: str | None = os.environ.get(var_name)
-
-    if env_var is not None:
+    # Check if already set in environment
+    if (env_var := os.environ.get(var_name)) is not None:
         return env_var
 
-    if is_colab():
-        # If in Google Colab, try to get the API key from a secret
-        # pyrefly: ignore [missing-import]
-        from google.colab import userdata
+    # Try Google Colab secrets
+    if (env_var := _get_from_colab(var_name)) is not None:
+        os.environ[var_name] = env_var
+        return env_var
 
-        try:
-            env_var = userdata.get(var_name)
-            if env_var:
-                print(f"{var_name} loaded from Google Colab secret.")
-        except userdata.SecretNotFoundError:
-            print(f"{var_name} not found in Google Colab secrets.")
+    # Try .env file
+    if (env_var := _get_from_dotenv(var_name)) is not None:
+        os.environ[var_name] = env_var
+        return env_var
 
-    if not env_var:
-        # Try to load API key from .env file
-        dotenv_path = find_dotenv(usecwd=True)  # .env can be in a parent folder
-        if dotenv_path:
-            load_dotenv(dotenv_path=dotenv_path)
-            env_var = os.environ.get(var_name)
-            if env_var:
-                print(f"{var_name} loaded from .env file.")
-                return env_var
-            print(f"{var_name} not found in .env file.")
+    # Use default value if provided
+    if default_value is not None:
+        os.environ[var_name] = default_value
+        return default_value
 
-    if not env_var and default_value is not None:
-        # If we can't find a value in the env, use the default value if provided.
-        env_var = default_value
-
-    if not env_var:
-        # If neither Colab nor .env file nor default, prompt the user for the API key
-        from getpass import getpass
-
-        env_var = getpass(f"Please enter your {var_name}: ")
-
+    # Prompt user for value
+    env_var = _get_from_user(var_name)
     if not env_var:
         raise ValueError(f"{var_name} could not be loaded from any source.")
 
-    # Set the environment variable for later implicit access.
     os.environ[var_name] = env_var
-
     return env_var
 
 
