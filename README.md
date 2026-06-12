@@ -169,7 +169,7 @@ chain = create_documents_chain(llm, prompt)
 
 For information about contributing to this repo, code of conduct guidelines, etc., see the community [CONTRIBUTING][CG] and [Code of Conduct][CoC] guides. All commits require [DCO-signoff][CG-legal] _and_ [GPG or SSH signing][CG-signing]. The GitHub recommended code security settings are enforced on this public repository (which include the signing requirement).
 
-For more background and a FAQ, please see the [community wiki](https://github.com/ibm-granite-community/community/wiki)
+For more background, please see the [community discussions](https://github.com/orgs/ibm-granite-community/discussions).
 
 ## Licenses
 
