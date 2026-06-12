@@ -34,13 +34,23 @@ def test_env_var_getpass(monkeypatch: pytest.MonkeyPatch):
 # for cases where there is a .env file, and assuming dotenv works
 def test_env_var_dotenv():
     env_path = pathlib.Path(".env")
+    backup_path = pathlib.Path(".env.backup")
 
-    assert_that(str(env_path)).does_not_exist()
+    # Move existing .env file aside if it exists
+    env_existed = env_path.exists()
+    if env_existed:
+        env_path.rename(backup_path)
+
     try:
         env_path.write_text("TEST_API_KEY=xyz123", encoding="utf-8")
         assert_that(get_env_var("TEST_API_KEY")).is_equal_to("xyz123")
     finally:
-        env_path.unlink()
+        # Clean up test .env file
+        if env_path.exists():
+            env_path.unlink()
+        # Restore original .env file if it existed
+        if env_existed:
+            backup_path.rename(env_path)
 
 
 # Test fallback to default environment variable
