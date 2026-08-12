@@ -65,7 +65,7 @@ preset = "strict"
 [tool.ruff]
 target-version = "py311"
 src = ["src", "tests"]
-extend-exclude = ["src/ibm_granite_community/_version.py"]
+extend-exclude = ["src/ibm_granite_community/_version.py", "*.md"]
 line-length = 180
 
 [tool.ruff.lint]
