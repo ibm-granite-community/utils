@@ -26,9 +26,13 @@ This file provides guidance to agents when working with code in this repository.
 
 ### LangChain Integration Specifics
 
-- `documents_chain.py` has special handling for ChatWatsonx model (lines 82-83) - wraps kwargs in "params" dict
+- `documents_chain.py` has special handling for ChatWatsonx model - wraps `chat_template_kwargs` in a `params` dict
 - `TokenizerChatPromptTemplate` merges kwargs into input dict (lines 290, 311) - non-standard behavior
-- Document role messages use custom format, not standard LangChain (see `add_document_role_messages`). This is used with Ollama since Ollama does not support passing documents in chat_template_kwargs.
+- `create_stuff_documents_chain` accepts a `document_mode: DocumentMode` parameter (enum) to control how documents are passed to the model:
+  - `CHAT_TEMPLATE_KWARGS`: passes documents via `chat_template_kwargs` in the model invocation
+  - `DOCUMENT_ROLES`: prepends `ChatMessage` objects with a `"document N"` role (use when the API does not support `chat_template_kwargs` but the model's chat template understands document role messages, e.g. older Granite models on Ollama)
+  - `TOOL_CALL` (default): appends an `AIMessage` tool call and a `ToolMessage` with the documents serialized as XML (use when the API does not support `documents` parameter in `chat_template_kwargs` but the model supports tool calling)
+- `add_tool_call_messages` in `utils.py` produces the AI tool call + ToolMessage pair; documents are serialized as `<documents><document id="…"><document_content>…</document_content></document>…</documents>` XML
 
 ### Code Style (Non-Standard)
 
