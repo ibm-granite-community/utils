@@ -14,7 +14,7 @@ A Python package providing utility functions for IBM Granite Community notebooks
 - **Secure Configuration Management**: Load API keys and environment variables from multiple sources (environment, .env files, Google Colab secrets, or user prompts)
 - **LangChain Utilities**: Enhanced utilities for working with LangChain, including:
   - Model detection and type checking
-  - Document role message handling
+  - Document passing via `chat_template_kwargs`, document role messages, or tool call messages
   - Custom prompt templates with tokenizer support
   - Advanced document chain implementations
 - **Text Processing**: Utilities for text wrapping and f-string escaping
@@ -95,7 +95,8 @@ escaped = escape_f_string('{"field": {value}}', "value")
 from ibm_granite_community.langchain.utils import (
     find_model,
     is_chat_model,
-    add_document_role_messages
+    add_document_role_messages,
+    add_tool_call_messages,
 )
 
 # Find the base language model in a chain
@@ -105,14 +106,17 @@ model = find_model(your_chain)
 if is_chat_model(model):
     print("This is a chat model")
 
-# Add document role messages for RAG applications when using Ollama which does not
-# support passing documents in chat_template_kwargs
+# Add document role messages (for APIs that don't support chat_template_kwargs
+# but whose model chat template understands the document role, e.g. older Granite models on Ollama)
 from langchain_core.messages import HumanMessage
 from langchain_core.documents import Document
 
 messages = [HumanMessage(content="What is in the documents?")]
 documents = [Document(page_content="Document content here")]
 enhanced_messages = add_document_role_messages(messages, documents)
+
+# Add tool call messages (documents serialized as XML, for models with tool-calling support)
+enhanced_messages = add_tool_call_messages(messages, documents)
 ```
 
 ### Tokenizer Chat Prompts
@@ -142,11 +146,20 @@ print(formatted.to_string())
 
 ```python
 from ibm_granite_community.langchain.chains.combine_documents import (
-    create_documents_chain
+    DocumentMode,
+    create_stuff_documents_chain,
 )
 
-# Create a custom documents chain for RAG applications
-chain = create_documents_chain(llm, prompt)
+# Default: pass documents via chat_template_kwargs (works with most hosted APIs)
+chain = create_stuff_documents_chain(llm, prompt)
+
+# Use document role messages when the API doesn't support chat_template_kwargs
+# but the model's chat template understands the document role (e.g. older Granite models on Ollama)
+chain = create_stuff_documents_chain(llm, prompt, document_mode=DocumentMode.DOCUMENT_ROLES)
+
+# Use tool call messages when the API doesn't support documents parameter in chat_template_kwargs
+# but the model supports tool calling
+chain = create_stuff_documents_chain(llm, prompt, document_mode=DocumentMode.TOOL_CALL)
 ```
 
 ## API Reference
@@ -163,7 +176,13 @@ chain = create_documents_chain(llm, prompt)
 
 - **`find_model(candidate: LanguageModelLike) -> BaseLanguageModel | None`**: Find base language model in a chain
 - **`is_chat_model(llm: BaseLanguageModel | None, default: bool = False) -> bool`**: Check if model is a chat model
-- **`add_document_role_messages(messages: Sequence[BaseMessage], documents: Sequence[Document]) -> list[BaseMessage]`**: Add document role messages
+- **`add_document_role_messages(messages, documents) -> list[BaseMessage]`**: Prepend document role `ChatMessage` objects for each document
+- **`add_tool_call_messages(messages, documents) -> list[BaseMessage]`**: Append an AI tool call message and a `ToolMessage` with documents serialized as XML
+
+### `langchain.chains.combine_documents` Module
+
+- **`DocumentMode`**: Enum controlling how documents are passed to the model — `CHAT_TEMPLATE_KWARGS`, `DOCUMENT_ROLES`, or `TOOL_CALL` (default)
+- **`create_stuff_documents_chain(llm, prompt, *, output_parser, document_variable_name, document_mode) -> Runnable`**: Create a chain that stuffs retrieved documents into the prompt and model invocation
 
 ## Contributing
 

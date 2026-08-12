@@ -25,7 +25,7 @@ def test_env_var_preset():
 
 # Test acquisition of environment variable using getpass
 def test_env_var_getpass(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(getpass, "getpass", lambda prompt: "abc123")
+    monkeypatch.setattr(getpass, "getpass", lambda prompt: "abc123")  # pyrefly: ignore[implicit-any-lambda]
 
     assert_that(get_env_var("APIKEY")).is_equal_to("abc123")
 

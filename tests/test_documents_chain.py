@@ -24,9 +24,9 @@ from langchain_core.utils.function_calling import convert_to_openai_tool
 from transformers import PreTrainedTokenizerBase
 from typing_extensions import override
 
-from ibm_granite_community.langchain.chains.combine_documents import create_stuff_documents_chain
+from ibm_granite_community.langchain.chains.combine_documents import DocumentMode, create_stuff_documents_chain
 from ibm_granite_community.langchain.prompts import TokenizerChatPromptTemplate
-from ibm_granite_community.langchain.utils import add_document_role_messages, find_model, is_chat_model
+from ibm_granite_community.langchain.utils import add_document_role_messages, add_tool_call_messages, find_model, is_chat_model
 
 
 # Method to use as a tool
@@ -212,7 +212,9 @@ class TestDocumentsChain:
         prompt_template = ChatPromptTemplate.from_template(
             "user content",
         )
-        chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser())
+        chain = create_stuff_documents_chain(
+            llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser(), document_mode=DocumentMode.CHAT_TEMPLATE_KWARGS
+        )
         result = chain.invoke(input={document_variable_name: documents})
         assert_that(result).contains("prompt")
         (
@@ -291,7 +293,9 @@ class TestDocumentsChain:
         prompt_template = ChatPromptTemplate.from_template(
             "user content",
         )
-        chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser())
+        chain = create_stuff_documents_chain(
+            llm=llm, prompt=prompt_template, document_variable_name=document_variable_name, output_parser=JsonOutputParser(), document_mode=DocumentMode.CHAT_TEMPLATE_KWARGS
+        )
         result = await chain.ainvoke(input={document_variable_name: documents})
         assert_that(result).contains("prompt")
         (
@@ -307,8 +311,8 @@ class TestDocumentsChain:
         assert_that_documents.extracting("text").contains(*(document.page_content for document in documents))
         assert_that_documents.extracting("doc_id").contains(*(document.metadata["doc_id"] for document in documents))
 
-    @pytest.mark.parametrize("use_document_roles", [False, True])
-    def test_documents_chain_bind_chat(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], use_document_roles: bool):
+    @pytest.mark.parametrize("document_mode", [DocumentMode.CHAT_TEMPLATE_KWARGS, DocumentMode.DOCUMENT_ROLES, DocumentMode.TOOL_CALL])
+    def test_documents_chain_bind_chat(self, tokenizer: PreTrainedTokenizerBase, documents: list[Document], document_mode: DocumentMode):
         assert_that(tokenizer).is_not_none()
         tools = [convert_to_openai_tool(i_am_a_tool)]
         llm = MockChat(tokenizer=tokenizer).bind_tools(tools=tools)
@@ -317,7 +321,7 @@ class TestDocumentsChain:
                 MessagesPlaceholder("user_content"),
             ],
         )
-        chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, output_parser=JsonOutputParser(), use_document_roles=use_document_roles)
+        chain = create_stuff_documents_chain(llm=llm, prompt=prompt_template, output_parser=JsonOutputParser(), document_mode=document_mode)
         result = chain.invoke(
             input={
                 "context": documents,
@@ -334,12 +338,24 @@ class TestDocumentsChain:
             .ends_with("<|start_of_role|>assistant<|end_of_role|>")
         )
         assert_that(result).contains("messages")
-        assert_that(result["messages"]).is_length(len(documents) + 1 if use_document_roles else 1)
+        if document_mode is DocumentMode.DOCUMENT_ROLES:
+            assert_that(result["messages"]).is_length(len(documents) + 1)
+        elif document_mode is DocumentMode.TOOL_CALL:
+            assert_that(result["messages"]).is_length(3)  # human + ai tool call + tool response
+        else:
+            assert_that(result["messages"]).is_length(1)
         assert_that(result["messages"]).extracting("content", filter={"type": "human"}).contains("user content")
-        if use_document_roles:
+        if document_mode is DocumentMode.DOCUMENT_ROLES:
             assert_that(result).does_not_contain_chat_template_kwarg("documents")
             assert_that(result["messages"]).extracting("content", filter={"type": "chat"}).contains(*(document.page_content for document in documents))
             assert_that(result["messages"]).extracting("role", filter={"type": "chat"}).contains(*(f"document {document.metadata['doc_id']}" for document in documents))
+        elif document_mode is DocumentMode.TOOL_CALL:
+            assert_that(result).does_not_contain_chat_template_kwarg("documents")
+            tool_messages = [m for m in result["messages"] if m["type"] == "tool"]
+            assert_that(tool_messages).is_length(1)
+            xml_content = tool_messages[0]["content"]
+            assert_that(xml_content).contains(*(document.page_content for document in documents))
+            assert_that(xml_content).contains(*(f'id="{document.metadata["doc_id"]}"' for document in documents))
         else:
             assert_that_documents = assert_that(result).extracting_chat_template_kwarg("documents")
             assert_that_documents.extracting("text").contains(*(document.page_content for document in documents))
@@ -358,9 +374,9 @@ class TestDocumentsChain:
         assert_that(is_chat_model(find_model(llm))).described_as(description).is_equal_to(expected)
         bound_llm = llm.bind(foo="bar")
         assert_that(is_chat_model(find_model(bound_llm))).described_as(f"Bound {description}").is_equal_to(expected)
-        lambda_llm = RunnableLambda(lambda inputs: llm.invoke(inputs))
+        lambda_llm = RunnableLambda(lambda inputs: llm.invoke(inputs))  # pyrefly: ignore[implicit-any-lambda]
         assert_that(is_chat_model(find_model(lambda_llm))).described_as(f"Lambda {description}").is_equal_to(expected)
-        sequence_llm = RunnableLambda(lambda x: x) | bound_llm | JsonOutputParser()
+        sequence_llm = RunnableLambda(lambda x: x) | bound_llm | JsonOutputParser()  # pyrefly: ignore[implicit-any-lambda]
         assert_that(is_chat_model(find_model(sequence_llm))).described_as(f"Sequence {description}").is_equal_to(expected)
 
     def test_add_document_role_messages_lc(self, documents: list[Document]):
@@ -394,3 +410,48 @@ class TestDocumentsChain:
         message_dicts = [message.model_dump(exclude_none=True) for message in document_messages]
         assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
         assert_that(message_dicts).extracting("content", filter={"type": "chat"}).is_empty()
+
+    def test_add_tool_call_messages_lc(self, documents: list[Document]):
+        assert_that(documents).is_not_empty()
+        prompt_template = ChatPromptTemplate.from_template("user content")
+        messages = prompt_template.format_messages()
+        result_messages = add_tool_call_messages(messages, documents)
+        assert_that(result_messages).is_length(len(messages) + 2)  # original + AI tool call + ToolMessage
+        message_dicts = [message.model_dump(exclude_none=True) for message in result_messages]
+        assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
+        tool_messages = [m for m in message_dicts if m["type"] == "tool"]
+        assert_that(tool_messages).is_length(1)
+        xml_content = tool_messages[0]["content"]
+        assert_that(xml_content).contains(*(document.page_content for document in documents))
+        assert_that(xml_content).contains(*(f'id="{document.metadata["doc_id"]}"' for document in documents))
+        ai_messages = [m for m in message_dicts if m["type"] == "ai"]
+        assert_that(ai_messages).is_length(1)
+        assert_that(ai_messages[0]["tool_calls"]).is_length(1)
+
+    def test_add_tool_call_messages_dict(self, documents: list[Document]):
+        assert_that(documents).is_not_empty()
+        prompt_template = ChatPromptTemplate.from_template("user content")
+        messages = prompt_template.format_messages()
+        document_dicts: list[dict[str, Any]] = [{**document.metadata, "text": document.page_content} for document in documents]
+        result_messages = add_tool_call_messages(messages, document_dicts)
+        assert_that(result_messages).is_length(len(messages) + 2)  # original + AI tool call + ToolMessage
+        message_dicts = [message.model_dump(exclude_none=True) for message in result_messages]
+        assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
+        tool_messages = [m for m in message_dicts if m["type"] == "tool"]
+        assert_that(tool_messages).is_length(1)
+        xml_content = tool_messages[0]["content"]
+        assert_that(xml_content).contains(*(document["text"] for document in document_dicts))
+        assert_that(xml_content).contains(*(f'id="{document.metadata["doc_id"]}"' for document in documents))
+        ai_messages = [m for m in message_dicts if m["type"] == "ai"]
+        assert_that(ai_messages).is_length(1)
+        assert_that(ai_messages[0]["tool_calls"]).is_length(1)
+
+    def test_add_tool_call_messages_empty(self):
+        prompt_template = ChatPromptTemplate.from_template("user content")
+        messages = prompt_template.format_messages()
+        result_messages = add_tool_call_messages(messages, [])
+        assert_that(result_messages).is_length(len(messages))
+        message_dicts = [message.model_dump(exclude_none=True) for message in result_messages]
+        assert_that(message_dicts).extracting("content", filter={"type": "human"}).contains("user content")
+        assert_that(message_dicts).extracting("type", filter={"type": "tool"}).is_empty()
+        assert_that(message_dicts).extracting("type", filter={"type": "ai"}).is_empty()
