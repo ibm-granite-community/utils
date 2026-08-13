@@ -150,16 +150,16 @@ from ibm_granite_community.langchain.chains.combine_documents import (
     create_stuff_documents_chain,
 )
 
-# Default: pass documents via chat_template_kwargs (works with most hosted APIs)
+# Default: Use tool call messages when the chat template doesn't support documents
+# parameter in chat_template_kwargs but the model supports tool calling
 chain = create_stuff_documents_chain(llm, prompt)
+
+# Pass documents via chat_template_kwargs (works with most hosted APIs)
+chain = create_stuff_documents_chain(llm, prompt, document_mode=DocumentMode.CHAT_TEMPLATE_KWARGS)
 
 # Use document role messages when the API doesn't support chat_template_kwargs
 # but the model's chat template understands the document role (e.g. older Granite models on Ollama)
 chain = create_stuff_documents_chain(llm, prompt, document_mode=DocumentMode.DOCUMENT_ROLES)
-
-# Use tool call messages when the API doesn't support documents parameter in chat_template_kwargs
-# but the model supports tool calling
-chain = create_stuff_documents_chain(llm, prompt, document_mode=DocumentMode.TOOL_CALL)
 ```
 
 ## API Reference
