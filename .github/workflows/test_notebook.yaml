@@ -160,7 +160,7 @@ jobs:
 
       - name: Free Disk Space
         if: ${{ inputs.free-disk-space }}
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
         with: ${{ fromJSON(startsWith(inputs.free-disk-space, '{') && inputs.free-disk-space || '{}') }}  # zizmor: ignore[obfuscation]
 
       - name: Checkout
